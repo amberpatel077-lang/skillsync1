@@ -1,0 +1,6 @@
+{
+  "name": "SkillSync",
+  "description": "Student Opportunity & Skill-Based Team Matching Platform connecting students with complementary teammates and opportunities.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -12,54 +12,54 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = BrandCyan,
-    onPrimary = Color(0xFF00363D),
-    primaryContainer = Color(0xFF004F58),
-    onPrimaryContainer = Color(0xFF9CF0FF),
-    secondary = BrandIndigo,
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFF282F6B),
-    onSecondaryContainer = Color(0xFFE0E0FF),
+    primary = SkyBluePrimary,
+    onPrimary = Color.White,
+    primaryContainer = SkyBluePale,
+    onPrimaryContainer = SkyBlueDeepNavy,
+    secondary = SkyBlueLight,
+    onSecondary = SkyBlueDeepNavy,
+    secondaryContainer = SkyBluePale,
+    onSecondaryContainer = SkyBlueDark,
     tertiary = BrandEmerald,
     onTertiary = Color.White,
-    tertiaryContainer = Color(0xFF00513B),
-    onTertiaryContainer = Color(0xFF70F8CE),
-    background = DarkBg,
-    onBackground = DarkTextPrimary,
-    surface = DarkSurface,
-    onSurface = DarkTextPrimary,
-    surfaceVariant = DarkSurfaceElevated,
-    onSurfaceVariant = DarkTextSecondary,
-    outline = DarkBorder,
-    outlineVariant = Color(0xFF1E293B)
+    tertiaryContainer = Color(0xFFCCFBF1),
+    onTertiaryContainer = Color(0xFF115E59),
+    background = SkyBlueUltraPale,
+    onBackground = SkyBlueDeepNavy,
+    surface = Color.White,
+    onSurface = SkyBlueDeepNavy,
+    surfaceVariant = SkyBluePale,
+    onSurfaceVariant = Color(0xFF1E293B),
+    outline = SkyBlueBorder,
+    outlineVariant = Color(0xFFBAE6FD)
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = BrandBlue,
+    primary = SkyBluePrimary,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFD6E3FF),
-    onPrimaryContainer = Color(0xFF001B3E),
-    secondary = BrandIndigo,
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFFE0E0FF),
-    onSecondaryContainer = Color(0xFF111444),
+    primaryContainer = SkyBluePale,
+    onPrimaryContainer = SkyBlueDeepNavy,
+    secondary = SkyBlueLight,
+    onSecondary = SkyBlueDeepNavy,
+    secondaryContainer = SkyBluePale,
+    onSecondaryContainer = SkyBlueDark,
     tertiary = BrandEmerald,
     onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFA6F5D8),
-    onTertiaryContainer = Color(0xFF002116),
-    background = LightBg,
-    onBackground = LightTextPrimary,
-    surface = LightSurface,
-    onSurface = LightTextPrimary,
-    surfaceVariant = LightSurfaceElevated,
-    onSurfaceVariant = LightTextSecondary,
-    outline = LightBorder,
-    outlineVariant = Color(0xFFCBD5E1)
+    tertiaryContainer = Color(0xFFCCFBF1),
+    onTertiaryContainer = Color(0xFF115E59),
+    background = SkyBlueUltraPale,
+    onBackground = SkyBlueDeepNavy,
+    surface = Color.White,
+    onSurface = SkyBlueDeepNavy,
+    surfaceVariant = SkyBluePale,
+    onSurfaceVariant = Color(0xFF1E293B),
+    outline = SkyBlueBorder,
+    outlineVariant = Color(0xFFBAE6FD)
 )
 
 @Composable
 fun MyApplicationTheme(
-    darkTheme: Boolean = true, // Default to sleek tech dark theme per PPT aesthetic
+    darkTheme: Boolean = false, // Default to clean, modern Light Theme
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {

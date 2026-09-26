@@ -22,6 +22,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import com.example.model.*
 import com.example.ui.theme.*
 
@@ -33,7 +36,7 @@ fun SkillBadge(
 ) {
     val levelColor = when (skill.level) {
         SkillLevel.ADVANCED -> BrandEmerald
-        SkillLevel.INTERMEDIATE -> BrandCyan
+        SkillLevel.INTERMEDIATE -> SkyBluePrimary
         SkillLevel.BEGINNER -> BrandAmber
     }
 
@@ -76,7 +79,7 @@ fun MatchScoreBadge(
     modifier: Modifier = Modifier
 ) {
     val (bgColor, textColor, label) = when {
-        score >= 85 -> Triple(BrandCyan.copy(alpha = 0.15f), BrandCyan, "High Match")
+        score >= 85 -> Triple(SkyBluePale, SkyBlueDark, "High Match")
         score >= 70 -> Triple(BrandEmerald.copy(alpha = 0.15f), BrandEmerald, "Good Match")
         else -> Triple(BrandAmber.copy(alpha = 0.15f), BrandAmber, "Partial Fit")
     }
@@ -254,7 +257,7 @@ fun OpportunityCard(
                     Text(
                         text = "${opportunity.currentMembersCount}/${opportunity.teamSizeMax} Members",
                         style = MaterialTheme.typography.labelSmall,
-                        color = BrandCyan,
+                        color = SkyBlueDark,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -283,8 +286,8 @@ fun OpportunityCard(
 
                     Surface(
                         shape = RoundedCornerShape(6.dp),
-                        color = if (hasSkill) BrandCyan.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant,
-                        border = if (hasSkill) androidx.compose.foundation.BorderStroke(1.dp, BrandCyan.copy(alpha = 0.5f)) else null
+                        color = if (hasSkill) SkyBluePale else MaterialTheme.colorScheme.surfaceVariant,
+                        border = if (hasSkill) androidx.compose.foundation.BorderStroke(1.dp, SkyBlueBorder) else null
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
@@ -295,14 +298,14 @@ fun OpportunityCard(
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = null,
-                                    tint = BrandCyan,
+                                    tint = SkyBlueDark,
                                     modifier = Modifier.size(10.dp)
                                 )
                             }
                             Text(
                                 text = skillName,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (hasSkill) BrandCyan else MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (hasSkill) SkyBlueDark else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -330,8 +333,8 @@ fun OpportunityCard(
                         .weight(1f)
                         .testTag("btn_find_teammates_${opportunity.id}"),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = BrandCyan,
-                        contentColor = Color(0xFF00363D)
+                        containerColor = SkyBluePrimary,
+                        contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(10.dp),
                     contentPadding = PaddingValues(vertical = 10.dp)
@@ -363,44 +366,62 @@ fun OpportunityCard(
 
 @Composable
 fun SurveyInsightCard(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
         colors = CardDefaults.cardColors(
-            containerColor = DarkSurfaceElevated
+            containerColor = SkyBluePale
         ),
         shape = RoundedCornerShape(14.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BrandIndigo.copy(alpha = 0.35f))
+        border = androidx.compose.foundation.BorderStroke(1.dp, SkyBlueBorder)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Row(
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Surface(
-                    shape = CircleShape,
-                    color = BrandIndigo.copy(alpha = 0.2f),
-                    modifier = Modifier.size(28.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.BarChart,
-                        contentDescription = null,
-                        tint = BrandIndigo,
-                        modifier = Modifier.padding(6.dp)
-                    )
+                    Surface(
+                        shape = CircleShape,
+                        color = SkyBluePrimary.copy(alpha = 0.2f),
+                        modifier = Modifier.size(30.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Poll,
+                            contentDescription = null,
+                            tint = SkyBlueDark,
+                            modifier = Modifier.padding(6.dp)
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "Campus Survey & Research Insights",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = SkyBlueDeepNavy
+                        )
+                        Text(
+                            text = "57 students surveyed across CSE, IT, ECE, Mech, Civil",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = DarkTextSecondary
+                        )
+                    }
                 }
-                Column {
-                    Text(
-                        text = "SGSITS Design Thinking Research",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "57 students surveyed across CSE, IT, ECE, Mech, Civil",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+
+                if (onClick != null) {
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = "View Details",
+                        tint = SkyBlueDark,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -415,6 +436,17 @@ fun SurveyInsightCard(
                 StatItem(metric = "87.7%", label = "Want skills visible")
                 StatItem(metric = "84.2%", label = "Rely on limited friends")
             }
+
+            if (onClick != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Tap to explore full 57 responses analysis & charts →",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = SkyBlueDark,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp
+                )
+            }
         }
     }
 }
@@ -426,13 +458,114 @@ private fun StatItem(metric: String, label: String) {
             text = metric,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.ExtraBold,
-            color = BrandCyan
+            color = SkyBlueDark
         )
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = DarkTextSecondary,
             fontSize = 10.sp
         )
     }
 }
+
+@Composable
+fun StudentAvatar(
+    student: StudentProfile?,
+    size: Dp = 48.dp,
+    showBorder: Boolean = true,
+    borderColor: Color = BrandIndigo,
+    modifier: Modifier = Modifier
+) {
+    val photoUri = student?.avatarPhotoUri
+    val initial = student?.name?.trim()?.take(1)?.uppercase() ?: "S"
+
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .then(
+                if (showBorder) Modifier.border(1.5.dp, borderColor, CircleShape)
+                else Modifier
+            )
+            .background(BrandIndigo.copy(alpha = 0.12f)),
+        contentAlignment = Alignment.Center
+    ) {
+        if (!photoUri.isNullOrBlank()) {
+            AsyncImage(
+                model = photoUri,
+                contentDescription = "${student?.name ?: "Student"} avatar photo",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Text(
+                text = initial,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = (size.value * 0.42f).sp,
+                color = BrandIndigo
+            )
+        }
+    }
+}
+
+@Composable
+fun PillarCard(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    accentColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        border = androidx.compose.foundation.BorderStroke(1.dp, SkyBlueBorder)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = accentColor.copy(alpha = 0.12f),
+                modifier = Modifier.size(38.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = DarkTextPrimary
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = DarkTextSecondary,
+                    fontSize = 11.sp
+                )
+            }
+        }
+    }
+}
+

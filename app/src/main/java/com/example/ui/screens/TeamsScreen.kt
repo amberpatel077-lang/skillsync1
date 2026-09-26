@@ -49,6 +49,7 @@ fun TeamsScreen(
     val resources by viewModel.activeTeamResources.collectAsState()
     val invitations by viewModel.currentStudentInvitations.collectAsState()
     val currentStudent by viewModel.currentStudent.collectAsState()
+    val allStudents by viewModel.students.collectAsState()
 
     var activeSubSection by remember { mutableStateOf(0) } // 0: Workspace, 1: Invitations (${invitations.size})
     var selectedWorkspaceTab by remember { mutableStateOf(0) } // 0: Chat, 1: Tasks, 2: Members, 3: Resources
@@ -73,7 +74,7 @@ fun TeamsScreen(
         PrimaryTabRow(
             selectedTabIndex = activeSubSection,
             containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = BrandCyan
+            contentColor = SkyBluePrimary
         ) {
             Tab(
                 selected = activeSubSection == 0,
@@ -156,7 +157,7 @@ fun TeamsScreen(
                                                 Icons.Default.Groups,
                                                 contentDescription = null,
                                                 modifier = Modifier.size(16.dp),
-                                                tint = if (tm.id == team.id) BrandCyan else MaterialTheme.colorScheme.onSurfaceVariant
+                                                tint = if (tm.id == team.id) SkyBluePrimary else MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
                                     )
@@ -173,7 +174,7 @@ fun TeamsScreen(
                                 .padding(16.dp),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                             shape = RoundedCornerShape(16.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, BrandIndigo.copy(alpha = 0.5f))
+                            border = androidx.compose.foundation.BorderStroke(1.dp, SkyBlueBorder)
                         ) {
                             Column {
                                 Image(
@@ -200,7 +201,7 @@ fun TeamsScreen(
                                         Text(
                                             text = "🔗 ${team.opportunityTitle}",
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = BrandCyan,
+                                            color = SkyBlueDark,
                                             fontWeight = FontWeight.SemiBold
                                         )
                                         Text(
@@ -214,8 +215,8 @@ fun TeamsScreen(
                                     Button(
                                         onClick = { viewModel.openFindTeammates(team.opportunityId) },
                                         colors = ButtonDefaults.buttonColors(
-                                            containerColor = BrandCyan,
-                                            contentColor = Color(0xFF00363D)
+                                            containerColor = SkyBluePrimary,
+                                            contentColor = Color.White
                                         ),
                                         shape = RoundedCornerShape(10.dp),
                                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
@@ -259,14 +260,14 @@ fun TeamsScreen(
                                         .padding(horizontal = 4.dp, vertical = 6.dp)
                                         .clip(RoundedCornerShape(10.dp))
                                         .clickable { selectedWorkspaceTab = index },
-                                    color = if (isSelected) BrandIndigo.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surfaceVariant,
-                                    border = if (isSelected) androidx.compose.foundation.BorderStroke(1.dp, BrandCyan) else null
+                                    color = if (isSelected) SkyBluePrimary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant,
+                                    border = if (isSelected) androidx.compose.foundation.BorderStroke(1.dp, SkyBluePrimary) else null
                                 ) {
                                     Text(
                                         text = title,
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected) BrandCyan else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = if (isSelected) SkyBlueDark else MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                                     )
                                 }
@@ -323,7 +324,7 @@ fun TeamsScreen(
                                             Icon(
                                                 imageVector = Icons.AutoMirrored.Filled.Send,
                                                 contentDescription = "Send",
-                                                tint = BrandCyan
+                                                tint = SkyBluePrimary
                                             )
                                         }
                                     }
@@ -347,7 +348,7 @@ fun TeamsScreen(
                                         fontWeight = FontWeight.Bold
                                     )
                                     TextButton(onClick = { showAddTaskDialog = true }) {
-                                        Text("+ Add Task", color = BrandCyan, fontWeight = FontWeight.Bold)
+                                        Text("+ Add Task", color = SkyBlueDark, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -376,7 +377,7 @@ fun TeamsScreen(
                                             Checkbox(
                                                 checked = task.isCompleted,
                                                 onCheckedChange = { viewModel.toggleTask(task) },
-                                                colors = CheckboxDefaults.colors(checkedColor = BrandCyan)
+                                                colors = CheckboxDefaults.colors(checkedColor = SkyBluePrimary)
                                             )
                                             Column {
                                                 Text(
@@ -426,19 +427,19 @@ fun TeamsScreen(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
-                                        Surface(
-                                            shape = CircleShape,
-                                            color = BrandIndigo.copy(alpha = 0.2f),
-                                            modifier = Modifier.size(42.dp)
-                                        ) {
-                                            Box(contentAlignment = Alignment.Center) {
-                                                Text(
-                                                    text = member.studentName.take(1),
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = BrandCyan
-                                                )
-                                            }
-                                        }
+                                        val memberStudent = allStudents.firstOrNull { it.id == member.studentId }
+                                        StudentAvatar(
+                                            student = memberStudent ?: StudentProfile(
+                                                id = member.studentId,
+                                                name = member.studentName,
+                                                college = "",
+                                                branch = "",
+                                                year = "",
+                                                email = "",
+                                                skills = emptyList()
+                                            ),
+                                            size = 42.dp
+                                        )
 
                                         Column(modifier = Modifier.weight(1f)) {
                                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -448,13 +449,13 @@ fun TeamsScreen(
                                                     fontWeight = FontWeight.Bold
                                                 )
                                                 Surface(
-                                                    color = BrandCyan.copy(alpha = 0.12f),
+                                                    color = SkyBluePale,
                                                     shape = RoundedCornerShape(4.dp)
                                                 ) {
                                                     Text(
                                                         text = member.role,
                                                         style = MaterialTheme.typography.labelSmall,
-                                                        color = BrandCyan,
+                                                        color = SkyBlueDark,
                                                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                                         fontSize = 10.sp
                                                     )
@@ -492,7 +493,7 @@ fun TeamsScreen(
                                         fontWeight = FontWeight.Bold
                                     )
                                     TextButton(onClick = { showAddResourceDialog = true }) {
-                                        Text("+ Add Link", color = BrandCyan, fontWeight = FontWeight.Bold)
+                                        Text("+ Add Link", color = SkyBlueDark, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -523,11 +524,11 @@ fun TeamsScreen(
                                             }
                                             Surface(
                                                 shape = CircleShape,
-                                                color = BrandIndigo.copy(alpha = 0.2f),
+                                                color = SkyBluePale,
                                                 modifier = Modifier.size(38.dp)
                                             ) {
                                                 Box(contentAlignment = Alignment.Center) {
-                                                    Icon(imageVector = icon, contentDescription = null, tint = BrandCyan, modifier = Modifier.size(20.dp))
+                                                    Icon(imageVector = icon, contentDescription = null, tint = SkyBlueDark, modifier = Modifier.size(20.dp))
                                                 }
                                             }
                                             Column {
@@ -582,7 +583,7 @@ fun TeamsScreen(
                             showAddTaskDialog = false
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandCyan, contentColor = Color(0xFF00363D))
+                    colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White)
                 ) {
                     Text("Add Task", fontWeight = FontWeight.Bold)
                 }
@@ -643,7 +644,7 @@ fun TeamsScreen(
                             showAddResourceDialog = false
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandCyan, contentColor = Color(0xFF00363D))
+                    colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White)
                 ) {
                     Text("Add Resource", fontWeight = FontWeight.Bold)
                 }
@@ -683,7 +684,7 @@ fun ApplicationStatusStepper(
                         text = "Stage ${currentStatus.stepNumber}/6: ${currentStatus.title}",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = BrandCyan
+                        color = SkyBlueDark
                     )
                 }
 
@@ -707,7 +708,7 @@ fun ApplicationStatusStepper(
                     .fillMaxWidth()
                     .height(6.dp)
                     .clip(RoundedCornerShape(3.dp)),
-                color = BrandCyan,
+                color = SkyBluePrimary,
                 trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
             )
         }
@@ -759,15 +760,15 @@ fun ChatMessageBubble(
             )
 
             Surface(
-                color = if (isMe) BrandCyan else DarkSurfaceElevated,
-                contentColor = if (isMe) Color(0xFF00363D) else MaterialTheme.colorScheme.onSurface,
+                color = if (isMe) BrandIndigo else MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = if (isMe) Color.White else MaterialTheme.colorScheme.onSurface,
                 shape = RoundedCornerShape(
                     topStart = 14.dp,
                     topEnd = 14.dp,
                     bottomStart = if (isMe) 14.dp else 2.dp,
                     bottomEnd = if (isMe) 2.dp else 14.dp
                 ),
-                border = if (!isMe) androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)) else null
+                border = if (!isMe) androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null
             ) {
                 Text(
                     text = msg.message,
@@ -849,7 +850,7 @@ fun InvitationsListView(
                         Text(
                             text = "Opportunity: ${inv.opportunityTitle}",
                             style = MaterialTheme.typography.bodySmall,
-                            color = BrandCyan
+                            color = SkyBlueDark
                         )
                         Text(
                             text = "Invited by ${inv.fromStudentName}",

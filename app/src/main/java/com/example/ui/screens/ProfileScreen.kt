@@ -1,6 +1,11 @@
 package com.example.ui.screens
 
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,10 +22,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.model.*
 import com.example.ui.components.*
 import com.example.ui.theme.*
@@ -34,6 +42,23 @@ fun ProfileScreen(
 ) {
     val currentStudent by viewModel.currentStudent.collectAsState()
     val student = currentStudent ?: return
+
+    val context = LocalContext.current
+    var showPhotoOptionsDialog by remember { mutableStateOf(false) }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        uri?.let {
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) {}
+            viewModel.updateProfilePhoto(it.toString())
+        }
+    }
 
     var showAddSkillDialog by remember { mutableStateOf(false) }
     var newSkillName by remember { mutableStateOf("") }
@@ -53,6 +78,7 @@ fun ProfileScreen(
     var newProjRole by remember { mutableStateOf("") }
 
     var showTrustSafetyDialog by remember { mutableStateOf(false) }
+    var showSwitchPersonaDialog by remember { mutableStateOf(false) }
 
     var showEditProfileDialog by remember { mutableStateOf(false) }
     var editName by remember(student) { mutableStateOf(student.name) }
@@ -84,18 +110,70 @@ fun ProfileScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        Surface(
-                            shape = CircleShape,
-                            color = BrandCyan.copy(alpha = 0.2f),
-                            modifier = Modifier.size(56.dp)
+                        Box(
+                            modifier = Modifier
+                                .size(68.dp)
+                                .testTag("profile_avatar_box")
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(
-                                    text = student.name.take(1),
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 22.sp,
-                                    color = BrandCyan
-                                )
+                            Box(
+                                modifier = Modifier
+                                    .size(68.dp)
+                                    .clip(CircleShape)
+                                    .border(2.dp, BrandIndigo, CircleShape)
+                                    .background(BrandIndigo.copy(alpha = 0.12f))
+                                    .clickable {
+                                        if (!student.avatarPhotoUri.isNullOrBlank()) {
+                                            showPhotoOptionsDialog = true
+                                        } else {
+                                            photoPickerLauncher.launch(
+                                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                            )
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (!student.avatarPhotoUri.isNullOrBlank()) {
+                                    AsyncImage(
+                                        model = student.avatarPhotoUri,
+                                        contentDescription = "${student.name} profile photo",
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(CircleShape),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Text(
+                                        text = student.name.trim().take(1).uppercase(),
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 26.sp,
+                                        color = BrandIndigo
+                                    )
+                                }
+                            }
+
+                            // Camera button overlay
+                            Surface(
+                                shape = CircleShape,
+                                color = BrandIndigo,
+                                contentColor = Color.White,
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .align(Alignment.BottomEnd)
+                                    .clip(CircleShape)
+                                    .clickable {
+                                        photoPickerLauncher.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
+                                    }
+                                    .testTag("btn_change_photo")
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.CameraAlt,
+                                        contentDescription = "Upload or change photo",
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                }
                             }
                         }
 
@@ -119,7 +197,7 @@ fun ProfileScreen(
                             Text(
                                 text = "${student.branch} • ${student.year}",
                                 style = MaterialTheme.typography.labelMedium,
-                                color = BrandCyan,
+                                color = SkyBlueDark,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -219,7 +297,7 @@ fun ProfileScreen(
                         }
 
                         IconButton(onClick = { showAddSkillDialog = true }) {
-                            Icon(Icons.Default.AddCircle, contentDescription = "Add Skill", tint = BrandCyan)
+                            Icon(Icons.Default.AddCircle, contentDescription = "Add Skill", tint = SkyBluePrimary)
                         }
                     }
 
@@ -256,7 +334,7 @@ fun ProfileScreen(
                                         Surface(
                                             color = when (skill.level) {
                                                 SkillLevel.ADVANCED -> BrandEmerald.copy(alpha = 0.2f)
-                                                SkillLevel.INTERMEDIATE -> BrandCyan.copy(alpha = 0.2f)
+                                                SkillLevel.INTERMEDIATE -> SkyBluePrimary.copy(alpha = 0.2f)
                                                 SkillLevel.BEGINNER -> BrandAmber.copy(alpha = 0.2f)
                                             },
                                             shape = RoundedCornerShape(6.dp)
@@ -265,7 +343,7 @@ fun ProfileScreen(
                                                 text = skill.level.displayName,
                                                 color = when (skill.level) {
                                                     SkillLevel.ADVANCED -> BrandEmerald
-                                                    SkillLevel.INTERMEDIATE -> BrandCyan
+                                                    SkillLevel.INTERMEDIATE -> SkyBlueDark
                                                     SkillLevel.BEGINNER -> BrandAmber
                                                 },
                                                 style = MaterialTheme.typography.labelSmall,
@@ -326,7 +404,7 @@ fun ProfileScreen(
                             availUntil = student.availability.availableUntil
                             showEditAvailabilityDialog = true
                         }) {
-                            Text("Edit", color = BrandCyan, fontWeight = FontWeight.Bold)
+                            Text("Edit", color = SkyBlueDark, fontWeight = FontWeight.Bold)
                         }
                     }
 
@@ -432,7 +510,7 @@ fun ProfileScreen(
                             fontWeight = FontWeight.Bold
                         )
                         IconButton(onClick = { showAddProjectDialog = true }) {
-                            Icon(Icons.Default.Add, contentDescription = "Add Project", tint = BrandCyan)
+                            Icon(Icons.Default.Add, contentDescription = "Add Project", tint = SkyBluePrimary)
                         }
                     }
 
@@ -456,7 +534,7 @@ fun ProfileScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Text(proj.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                                        Text(proj.role, color = BrandCyan, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                                        Text(proj.role, color = SkyBlueDark, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                                     }
                                     Text(proj.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     Spacer(modifier = Modifier.height(4.dp))
@@ -475,9 +553,9 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showTrustSafetyDialog = true },
-                colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 shape = RoundedCornerShape(14.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, BrandEmerald.copy(alpha = 0.4f))
+                border = androidx.compose.foundation.BorderStroke(1.dp, BrandEmerald.copy(alpha = 0.5f))
             ) {
                 Row(
                     modifier = Modifier
@@ -492,11 +570,71 @@ fun ProfileScreen(
                     ) {
                         Icon(Icons.Default.Security, contentDescription = null, tint = BrandEmerald)
                         Column {
-                            Text("Trust & Safety Settings", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            Text("Trust & Safety Settings", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                             Text("Verification badges, privacy controls & reporting", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                     Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
+        // Section: Appearance & Theme (Light / Dark Mode)
+        item {
+            val uiState by viewModel.uiState.collectAsState()
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("card_profile_theme"),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(14.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = if (uiState.isDarkTheme) BrandIndigo.copy(alpha = 0.15f) else BrandAmber.copy(alpha = 0.15f),
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = if (uiState.isDarkTheme) Icons.Default.DarkMode else Icons.Default.LightMode,
+                                    contentDescription = null,
+                                    tint = if (uiState.isDarkTheme) BrandIndigo else BrandAmber,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                        Column {
+                            Text(
+                                text = if (uiState.isDarkTheme) "Dark Theme" else "Light Theme",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = if (uiState.isDarkTheme) "Dark mode enabled" else "Pristine light mode active",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Switch(
+                        checked = !uiState.isDarkTheme,
+                        onCheckedChange = { isLight -> viewModel.setDarkTheme(!isLight) },
+                        modifier = Modifier.testTag("switch_theme_mode")
+                    )
                 }
             }
         }
@@ -507,9 +645,9 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("card_profile_account"),
-                colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 shape = RoundedCornerShape(14.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, CardStroke)
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -519,39 +657,139 @@ fun ProfileScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(Icons.Default.AccountCircle, contentDescription = null, tint = BrandCyan)
+                        Icon(Icons.Default.AccountCircle, contentDescription = null, tint = SkyBluePrimary)
                         Text(
-                            text = "Account & Authentication",
+                            text = "Active Student Profile",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
 
                     Text(
-                        text = "Logged in as ${student.name} (${student.email})",
+                        text = "Viewing as ${student.name} (${student.email}) • ${student.college}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     OutlinedButton(
-                        onClick = { viewModel.logout() },
+                        onClick = { showSwitchPersonaDialog = true },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .testTag("btn_profile_logout"),
+                            .testTag("btn_profile_switch_persona"),
                         shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
+                            contentColor = SkyBluePrimary
                         ),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
+                        border = androidx.compose.foundation.BorderStroke(1.dp, SkyBluePrimary.copy(alpha = 0.5f))
                     ) {
-                        Icon(Icons.Default.Logout, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.SwitchAccount, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Log Out / Switch Account", fontWeight = FontWeight.Bold)
+                        Text("Switch Active Student Profile", fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
+    }
+
+    // Switch Student Profile Dialog
+    if (showSwitchPersonaDialog) {
+        val allStudents by viewModel.students.collectAsState()
+        AlertDialog(
+            onDismissRequest = { showSwitchPersonaDialog = false },
+            title = {
+                Text("Select Student Profile", fontWeight = FontWeight.Bold)
+            },
+            text = {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(allStudents) { s ->
+                        val isCurrent = s.id == student.id
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.switchStudent(s.id)
+                                    showSwitchPersonaDialog = false
+                                },
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isCurrent) SkyBluePale else MaterialTheme.colorScheme.surfaceVariant,
+                            border = if (isCurrent) androidx.compose.foundation.BorderStroke(1.dp, SkyBluePrimary) else null
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                StudentAvatar(student = s, size = 38.dp)
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(s.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                                    Text("${s.branch} • ${s.college}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                if (isCurrent) {
+                                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = SkyBluePrimary, modifier = Modifier.size(18.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showSwitchPersonaDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+
+    // Photo Action Options Dialog
+    if (showPhotoOptionsDialog) {
+        AlertDialog(
+            onDismissRequest = { showPhotoOptionsDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.CameraAlt, contentDescription = null, tint = BrandIndigo)
+                    Text("Profile Photo", fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Text(
+                    text = "Update or remove your personal avatar photo visible to team members and college peers.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showPhotoOptionsDialog = false
+                        photoPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                    modifier = Modifier.testTag("btn_choose_new_photo")
+                ) {
+                    Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Choose New Photo")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showPhotoOptionsDialog = false
+                        viewModel.removeProfilePhoto()
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    modifier = Modifier.testTag("btn_remove_photo")
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Remove Photo")
+                }
+            }
+        )
     }
 
     // Add Skill Dialog
@@ -579,8 +817,8 @@ fun ProfileScreen(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
                                     .clickable { newSkillLevel = level },
-                                color = if (isSel) BrandCyan.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant,
-                                border = if (isSel) androidx.compose.foundation.BorderStroke(1.dp, BrandCyan) else null
+                                color = if (isSel) SkyBluePrimary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant,
+                                border = if (isSel) androidx.compose.foundation.BorderStroke(1.dp, SkyBluePrimary) else null
                             ) {
                                 Text(
                                     text = level.displayName,
@@ -603,7 +841,7 @@ fun ProfileScreen(
                             showAddSkillDialog = false
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandCyan, contentColor = Color(0xFF00363D))
+                    colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White)
                 ) {
                     Text("Add Skill", fontWeight = FontWeight.Bold)
                 }
@@ -660,7 +898,7 @@ fun ProfileScreen(
                         viewModel.updateProfile(student.copy(availability = newAvail))
                         showEditAvailabilityDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandCyan, contentColor = Color(0xFF00363D))
+                    colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White)
                 ) {
                     Text("Save Availability", fontWeight = FontWeight.Bold)
                 }
@@ -725,7 +963,7 @@ fun ProfileScreen(
                             showAddProjectDialog = false
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandCyan, contentColor = Color(0xFF00363D))
+                    colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White)
                 ) {
                     Text("Add Project", fontWeight = FontWeight.Bold)
                 }
@@ -771,7 +1009,7 @@ fun ProfileScreen(
             onDismissRequest = { showEditProfileDialog = false },
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Default.Person, contentDescription = null, tint = BrandCyan)
+                    Icon(Icons.Default.Person, contentDescription = null, tint = SkyBluePrimary)
                     Text("Edit Student Profile", fontWeight = FontWeight.Bold)
                 }
             },
@@ -780,6 +1018,41 @@ fun ProfileScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            StudentAvatar(student = student, size = 52.dp)
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Profile Photo", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyMedium)
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    TextButton(
+                                        onClick = {
+                                            photoPickerLauncher.launch(
+                                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                            )
+                                        },
+                                        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(if (student.avatarPhotoUri != null) "Change Photo" else "Upload Photo")
+                                    }
+                                    if (student.avatarPhotoUri != null) {
+                                        TextButton(
+                                            onClick = { viewModel.removeProfilePhoto() },
+                                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                                            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp)
+                                        ) {
+                                            Text("Remove")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     item {
                         OutlinedTextField(
                             value = editName,
@@ -860,7 +1133,7 @@ fun ProfileScreen(
                             showEditProfileDialog = false
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandCyan, contentColor = Color(0xFF00363D))
+                    colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White)
                 ) {
                     Text("Save Changes", fontWeight = FontWeight.Bold)
                 }

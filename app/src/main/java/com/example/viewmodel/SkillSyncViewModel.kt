@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 data class UiState(
-    val isAuthenticated: Boolean = false,
+    val isAuthenticated: Boolean = true,
     val authError: String? = null,
     val authSuccessMessage: String? = null,
     val currentStudentId: String = "student_amber",
@@ -28,6 +28,7 @@ data class UiState(
     val studentSearchQuery: String = "",
     val studentBranchFilter: String? = null,
     val studentSkillFilter: String? = null,
+    val isDarkTheme: Boolean = false,
     val userMessage: String? = null
 )
 
@@ -35,6 +36,7 @@ enum class AppTab(val title: String) {
     HOME("Home"),
     EXPLORE("Explore"),
     TEAMS("Teams"),
+    SURVEY("Campus Data"),
     PROFILE("Profile")
 }
 
@@ -356,6 +358,32 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    fun updateProfilePhoto(photoUri: String) {
+        val student = currentStudent.value ?: return
+        viewModelScope.launch {
+            val updated = student.copy(avatarPhotoUri = photoUri)
+            repository.updateStudent(updated)
+            _uiState.update { it.copy(userMessage = "Profile photo updated! 📸") }
+        }
+    }
+
+    fun removeProfilePhoto() {
+        val student = currentStudent.value ?: return
+        viewModelScope.launch {
+            val updated = student.copy(avatarPhotoUri = null)
+            repository.updateStudent(updated)
+            _uiState.update { it.copy(userMessage = "Profile photo removed.") }
+        }
+    }
+
+    fun toggleTheme() {
+        _uiState.update { it.copy(isDarkTheme = !it.isDarkTheme) }
+    }
+
+    fun setDarkTheme(enabled: Boolean) {
+        _uiState.update { it.copy(isDarkTheme = enabled) }
+    }
+
     fun createOpportunity(
         title: String,
         category: OpportunityCategory,
@@ -584,6 +612,7 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
         skills: List<SkillEntry>,
         bio: String = "",
         lookingFor: LookingFor = LookingFor.BOTH,
+        avatarPhotoUri: String? = null,
         autoLogin: Boolean = true,
         onSuccess: () -> Unit
     ) {
@@ -636,7 +665,8 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 contactPreference = "College Email ($trimmedEmail)",
                 bio = if (bio.isNotBlank()) bio.trim() else "Passionate student ready to build and collaborate on innovative projects!",
                 projects = emptyList(),
-                isPublic = true
+                isPublic = true,
+                avatarPhotoUri = avatarPhotoUri
             )
 
             repository.registerStudent(newStudent)
@@ -666,10 +696,8 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
     fun logout() {
         _uiState.update {
             it.copy(
-                isAuthenticated = false,
-                authError = null,
-                authSuccessMessage = null,
-                userMessage = "Signed out successfully"
+                activeTab = AppTab.HOME,
+                userMessage = "Active tab set to Home"
             )
         }
     }

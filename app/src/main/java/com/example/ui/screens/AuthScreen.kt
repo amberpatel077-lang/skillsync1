@@ -1,5 +1,9 @@
 package com.example.ui.screens
 
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,6 +31,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -38,8 +43,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.R
 import com.example.model.*
+import com.example.ui.components.StudentAvatar
 import com.example.ui.theme.*
 import com.example.viewmodel.SkillSyncViewModel
 
@@ -71,6 +78,22 @@ fun AuthScreen(
     var forgotPasswordSent by remember { mutableStateOf(false) }
 
     // Sign Up form state
+    val context = LocalContext.current
+    var signUpPhotoUri by remember { mutableStateOf<String?>(null) }
+    val signUpPhotoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        uri?.let {
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) {}
+            signUpPhotoUri = it.toString()
+        }
+    }
+
     var signUpName by remember { mutableStateOf("") }
     var signUpCollege by remember { mutableStateOf("SGSITS Indore") }
     var signUpBranch by remember { mutableStateOf("Computer Science & Engineering") }
@@ -179,8 +202,8 @@ fun AuthScreen(
                     Text(
                         text = "STUDENTS   ×   OPPORTUNITIES   ×   TEAMS",
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF94A3B8),
-                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.SemiBold,
                         letterSpacing = 1.sp,
                         modifier = Modifier.padding(top = 4.dp, bottom = 14.dp)
                     )
@@ -188,36 +211,47 @@ fun AuthScreen(
                     // Central Glowing Logo Badge from image
                     Surface(
                         shape = RoundedCornerShape(22.dp),
-                        color = Color(0xFF0F172A),
+                        color = MaterialTheme.colorScheme.surface,
                         border = androidx.compose.foundation.BorderStroke(
-                            2.dp,
-                            Brush.linearGradient(listOf(BrandPink, BrandCyan))
+                            1.5.dp,
+                            Brush.linearGradient(listOf(BrandIndigo.copy(alpha = 0.4f), BrandCyan.copy(alpha = 0.6f)))
                         ),
-                        shadowElevation = 12.dp,
+                        shadowElevation = 6.dp,
                         modifier = Modifier.padding(horizontal = 16.dp)
                     ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 18.dp)
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp)
                         ) {
                             Box(
                                 modifier = Modifier
                                     .size(80.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(Color(0xFF030712)),
+                                    .clip(RoundedCornerShape(18.dp))
+                                    .background(
+                                        Brush.linearGradient(
+                                            listOf(Color(0xFFEEF2FF), Color(0xFFE0F2FE))
+                                        )
+                                    )
+                                    .border(
+                                        1.dp,
+                                        Brush.linearGradient(
+                                            listOf(BrandIndigo.copy(alpha = 0.3f), BrandCyan.copy(alpha = 0.4f))
+                                        ),
+                                        RoundedCornerShape(18.dp)
+                                    ),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Image(
                                     painter = painterResource(id = R.drawable.ic_skillsync_logo),
                                     contentDescription = "SkillSync Official Logo",
                                     modifier = Modifier
-                                        .size(76.dp)
-                                        .clip(RoundedCornerShape(14.dp)),
+                                        .size(72.dp)
+                                        .clip(RoundedCornerShape(16.dp)),
                                     contentScale = ContentScale.Fit
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(10.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
 
                             Text(
                                 text = "SkillSync",
@@ -225,14 +259,14 @@ fun AuthScreen(
                                     fontWeight = FontWeight.ExtraBold,
                                     letterSpacing = (-0.5).sp
                                 ),
-                                color = Color.White
+                                color = MaterialTheme.colorScheme.onSurface
                             )
 
                             Text(
                                 text = "Turn Interests Into Impact",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = BrandCyan
+                                color = BrandIndigo
                             )
                         }
                     }
@@ -406,7 +440,8 @@ fun AuthScreen(
                             Text(
                                 text = uiState.authSuccessMessage ?: "",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White,
+                                color = Color(0xFF064E3B),
+                                fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -435,7 +470,7 @@ fun AuthScreen(
                                     text = "Welcome Back",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
                                     text = "Log in to access your hackathons, team chat & matching opportunities",
@@ -617,7 +652,7 @@ fun AuthScreen(
                                     text = "⚡ Instant Demo Log-In",
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
                                     text = "1-Tap Access",
@@ -659,25 +694,13 @@ fun AuthScreen(
                                                 verticalAlignment = Alignment.CenterVertically,
                                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                                             ) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(36.dp)
-                                                        .clip(CircleShape)
-                                                        .background(BrandIndigo.copy(alpha = 0.5f)),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Text(
-                                                        text = student.name.firstOrNull()?.toString() ?: "S",
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = BrandCyan
-                                                    )
-                                                }
+                                                StudentAvatar(student = student, size = 36.dp)
                                                 Column {
                                                     Text(
                                                         text = student.name,
                                                         style = MaterialTheme.typography.bodyMedium,
                                                         fontWeight = FontWeight.Bold,
-                                                        color = Color.White
+                                                        color = MaterialTheme.colorScheme.onSurface
                                                     )
                                                     Text(
                                                         text = "${student.branch} • ${student.year}",
@@ -757,13 +780,95 @@ fun AuthScreen(
                                     text = "Create Student Profile",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
                                     text = "Join your college innovation network & find dream team members",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+                            }
+
+                            // Profile Photo Selector
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .clickable {
+                                        signUpPhotoPickerLauncher.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
+                                    }
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(54.dp)
+                                        .clip(CircleShape)
+                                        .border(1.5.dp, BrandIndigo, CircleShape)
+                                        .background(BrandIndigo.copy(alpha = 0.12f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (!signUpPhotoUri.isNullOrBlank()) {
+                                        AsyncImage(
+                                            model = signUpPhotoUri,
+                                            contentDescription = "Selected profile photo",
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .clip(CircleShape),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    } else {
+                                        Icon(
+                                            Icons.Default.AddAPhoto,
+                                            contentDescription = null,
+                                            tint = BrandIndigo,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                }
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = if (signUpPhotoUri != null) "Profile Photo Added" else "Add Profile Photo (Optional)",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = if (signUpPhotoUri != null) "Tap to change photo" else "Tap to choose a picture from device",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                if (signUpPhotoUri != null) {
+                                    IconButton(
+                                        onClick = { signUpPhotoUri = null }
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Close,
+                                            contentDescription = "Remove photo",
+                                            tint = MaterialTheme.colorScheme.error,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                } else {
+                                    FilledTonalButton(
+                                        onClick = {
+                                            signUpPhotoPickerLauncher.launch(
+                                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                            )
+                                        },
+                                        shape = RoundedCornerShape(8.dp),
+                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                                    ) {
+                                        Text("Choose", fontSize = 12.sp)
+                                    }
+                                }
                             }
 
                             // Full Name
@@ -990,6 +1095,7 @@ fun AuthScreen(
                                         skills = selectedSkills,
                                         bio = signUpBio,
                                         lookingFor = signUpLookingFor,
+                                        avatarPhotoUri = signUpPhotoUri,
                                         autoLogin = true,
                                         onSuccess = {
                                             // Navigation to authenticated state handled by uiState
@@ -1057,8 +1163,8 @@ fun AuthScreen(
                 Spacer(modifier = Modifier.height(28.dp))
                 Surface(
                     shape = RoundedCornerShape(16.dp),
-                    color = Color(0xFF0F172A).copy(alpha = 0.8f),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, BrandIndigo.copy(alpha = 0.4f)),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
@@ -1072,25 +1178,25 @@ fun AuthScreen(
                             Icon(
                                 Icons.Default.School,
                                 contentDescription = null,
-                                tint = BrandCyan,
+                                tint = BrandIndigo,
                                 modifier = Modifier.size(18.dp)
                             )
                             Text(
                                 text = "Team SkillSync",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Box(
                                 modifier = Modifier
                                     .size(4.dp)
                                     .clip(CircleShape)
-                                    .background(BrandPink)
+                                    .background(BrandIndigo)
                             )
                             Text(
                                 text = "Design Thinking Project",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = BrandPink,
+                                color = BrandIndigo,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -1100,9 +1206,10 @@ fun AuthScreen(
                         Text(
                             text = "Abhinav Purohit  •  Abhinav Mehta  •  Akash Patel  •  Amber Patel  •  Ishmit Shukla",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF94A3B8),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
-                            lineHeight = 16.sp
+                            lineHeight = 16.sp,
+                            fontWeight = FontWeight.Medium
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
@@ -1110,7 +1217,7 @@ fun AuthScreen(
                         Text(
                             text = "Student Opportunity & Skill-Based Team Matching Platform",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF64748B),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -1170,7 +1277,7 @@ fun AuthScreen(
                             Text(
                                 text = "Password reset instructions sent to $forgotPasswordEmail! Please check your campus inbox.",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }

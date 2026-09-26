@@ -75,7 +75,7 @@ fun FindTeammatesSheet(
                     Text(
                         text = opp?.title ?: "Opportunity",
                         style = MaterialTheme.typography.bodySmall,
-                        color = BrandCyan,
+                        color = SkyBlueDark,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -91,8 +91,9 @@ fun FindTeammatesSheet(
 
             // Roster Status & Skill Gap Analysis
             Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                colors = CardDefaults.cardColors(containerColor = SkyBluePale),
                 shape = RoundedCornerShape(12.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, SkyBlueBorder),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
@@ -105,7 +106,7 @@ fun FindTeammatesSheet(
                             text = "Your Team: ${activeTeamMembers.size}/${opp?.teamSizeMax ?: 4} Members",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = SkyBlueDeepNavy
                         )
                         Surface(
                             color = BrandEmerald.copy(alpha = 0.15f),
@@ -126,8 +127,9 @@ fun FindTeammatesSheet(
 
                     Text(
                         text = "Algorithm prioritizes candidates who fill your missing skills (Presentation, UI/UX, Cloud) without duplicating already covered skills.",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        style = MaterialTheme.typography.bodySmall,
+                        color = DarkTextSecondary,
+                        fontSize = 11.sp
                     )
                 }
             }
@@ -138,7 +140,7 @@ fun FindTeammatesSheet(
                 text = "Recommended Teammates (${teammateMatches.size})",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = SkyBlueDeepNavy
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -159,11 +161,11 @@ fun FindTeammatesSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("match_card_${candidate.id}"),
-                        colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         shape = RoundedCornerShape(14.dp),
                         border = androidx.compose.foundation.BorderStroke(
                             1.dp,
-                            if (breakdown.totalScore >= 85) BrandCyan.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                            if (breakdown.totalScore >= 85) SkyBluePrimary.copy(alpha = 0.6f) else SkyBlueBorder
                         )
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
@@ -177,20 +179,10 @@ fun FindTeammatesSheet(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
-                                    Surface(
-                                        shape = CircleShape,
-                                        color = BrandCyan.copy(alpha = 0.2f),
-                                        modifier = Modifier.size(42.dp)
-                                    ) {
-                                        Box(contentAlignment = Alignment.Center) {
-                                            Text(
-                                                text = candidate.name.take(1),
-                                                fontWeight = FontWeight.Bold,
-                                                color = BrandCyan,
-                                                fontSize = 16.sp
-                                            )
-                                        }
-                                    }
+                                    StudentAvatar(
+                                        student = candidate,
+                                        size = 42.dp
+                                    )
 
                                     Column {
                                         Row(
@@ -261,7 +253,7 @@ fun FindTeammatesSheet(
                                 ) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text("Skill (50%)", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text("${breakdown.skillScore}/50", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = BrandCyan)
+                                        Text("${breakdown.skillScore}/50", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = SkyBlueDark)
                                     }
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text("Interest (20%)", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -313,8 +305,8 @@ fun FindTeammatesSheet(
                                         .weight(1f)
                                         .testTag("btn_invite_${candidate.id}"),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = BrandCyan,
-                                        contentColor = Color(0xFF00363D)
+                                        containerColor = SkyBluePrimary,
+                                        contentColor = Color.White
                                     ),
                                     shape = RoundedCornerShape(8.dp),
                                     contentPadding = PaddingValues(vertical = 8.dp)
@@ -357,7 +349,7 @@ fun FindTeammatesSheet(
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(skill.iconEmoji)
                             Text(skill.name, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodySmall)
-                            Text("(${skill.level.displayName})", color = BrandCyan, style = MaterialTheme.typography.labelSmall)
+                            Text("(${skill.level.displayName})", color = SkyBlueDark, style = MaterialTheme.typography.labelSmall)
                         }
                     }
 
@@ -383,7 +375,7 @@ fun FindTeammatesSheet(
                         inviteCandidateDialog = s
                         inviteNoteText = "Hey ${s.name}! We'd love to have you on our team for ${opp?.title ?: "this opportunity"}."
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandCyan, contentColor = Color(0xFF00363D))
+                    colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White)
                 ) {
                     Text("Invite to Team", fontWeight = FontWeight.Bold)
                 }
@@ -426,7 +418,7 @@ fun FindTeammatesSheet(
                         viewModel.sendTeamInvitation(candidate, inviteNoteText)
                         inviteCandidateDialog = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandCyan, contentColor = Color(0xFF00363D))
+                    colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White)
                 ) {
                     Text("Send Invitation 🚀", fontWeight = FontWeight.Bold)
                 }

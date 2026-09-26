@@ -89,7 +89,7 @@ fun OpportunityDetailDialog(
             Text(
                 text = "Organized by ${opp.organizer}",
                 style = MaterialTheme.typography.bodyMedium,
-                color = BrandCyan,
+                color = SkyBlueDark,
                 fontWeight = FontWeight.Medium
             )
 
@@ -123,7 +123,7 @@ fun OpportunityDetailDialog(
                     ) {
                         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Icon(Icons.Default.CalendarToday, contentDescription = null, tint = BrandCyan, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Default.CalendarToday, contentDescription = null, tint = SkyBluePrimary, modifier = Modifier.size(16.dp))
                                 Text("Event Dates: ${opp.date}", style = MaterialTheme.typography.bodySmall)
                             }
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -169,8 +169,8 @@ fun OpportunityDetailDialog(
 
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = if (hasSkill) BrandCyan.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant,
-                                border = if (hasSkill) androidx.compose.foundation.BorderStroke(1.dp, BrandCyan) else null
+                                color = if (hasSkill) SkyBluePrimary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant,
+                                border = if (hasSkill) androidx.compose.foundation.BorderStroke(1.dp, SkyBluePrimary) else null
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
@@ -178,12 +178,12 @@ fun OpportunityDetailDialog(
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     if (hasSkill) {
-                                        Icon(Icons.Default.Check, contentDescription = null, tint = BrandCyan, modifier = Modifier.size(12.dp))
+                                        Icon(Icons.Default.Check, contentDescription = null, tint = SkyBluePrimary, modifier = Modifier.size(12.dp))
                                     }
                                     Text(
                                         text = skillName,
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = if (hasSkill) BrandCyan else MaterialTheme.colorScheme.onSurface
+                                        color = if (hasSkill) SkyBlueDark else MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                             }
@@ -236,7 +236,7 @@ fun OpportunityDetailDialog(
                         viewModel.openFindTeammates(targetId)
                     },
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandCyan, contentColor = Color(0xFF00363D)),
+                    colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White),
                     shape = RoundedCornerShape(12.dp),
                     contentPadding = PaddingValues(vertical = 12.dp)
                 ) {
@@ -281,7 +281,7 @@ fun OpportunityDetailDialog(
                         showCreateTeamDialog = false
                         onDismiss()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandCyan, contentColor = Color(0xFF00363D))
+                    colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White)
                 ) {
                     Text("Create Team 🚀", fontWeight = FontWeight.Bold)
                 }

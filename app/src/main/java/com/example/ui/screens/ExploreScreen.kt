@@ -56,7 +56,7 @@ fun ExploreScreen(
             PrimaryTabRow(
                 selectedTabIndex = if (uiState.exploreSubTab == ExploreSubTab.OPPORTUNITIES) 0 else 1,
                 containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = BrandCyan
+                contentColor = SkyBluePrimary
             ) {
                 Tab(
                     selected = uiState.exploreSubTab == ExploreSubTab.OPPORTUNITIES,
@@ -116,8 +116,8 @@ fun ExploreScreen(
                 onClick = { showPostOppDialog = true },
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
                 text = { Text("Post Opportunity", fontWeight = FontWeight.Bold) },
-                containerColor = BrandCyan,
-                contentColor = Color(0xFF00363D),
+                containerColor = SkyBluePrimary,
+                contentColor = Color.White,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(bottom = 80.dp, end = 16.dp)
@@ -135,7 +135,7 @@ fun ExploreScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = null, tint = BrandCyan)
+                    Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = null, tint = SkyBluePrimary)
                     Text("Invite ${student.name} to Team", fontWeight = FontWeight.Bold)
                 }
             },
@@ -163,7 +163,7 @@ fun ExploreScreen(
                         viewModel.sendTeamInvitation(student, inviteNoteText)
                         inviteCandidateDialog = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandCyan, contentColor = Color(0xFF00363D))
+                    colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White)
                 ) {
                     Text("Send Invite 🚀", fontWeight = FontWeight.Bold)
                 }
@@ -364,7 +364,7 @@ fun PostOpportunityDialog(
                         prizes
                     )
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = BrandCyan, contentColor = Color(0xFF00363D))
+                colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White)
             ) {
                 Text("Publish 🚀", fontWeight = FontWeight.Bold)
             }
@@ -399,7 +399,7 @@ fun OpportunityHubView(
                 onValueChange = { viewModel.setOppSearchQuery(it) },
                 placeholder = { Text("Search hackathons, projects, internships, skills...") },
                 leadingIcon = {
-                    Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = BrandCyan)
+                    Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = SkyBluePrimary)
                 },
                 trailingIcon = {
                     if (uiState.oppSearchQuery.isNotEmpty()) {
@@ -413,7 +413,7 @@ fun OpportunityHubView(
                     .testTag("input_search_opps"),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = BrandCyan,
+                    focusedBorderColor = SkyBluePrimary,
                     unfocusedBorderColor = MaterialTheme.colorScheme.outline
                 ),
                 singleLine = true
@@ -485,7 +485,7 @@ fun OpportunityHubView(
                         Text(
                             text = title,
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (isSelected) BrandCyan else MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = if (isSelected) SkyBlueDark else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                         )
@@ -513,7 +513,7 @@ fun OpportunityHubView(
                 Text(
                     text = "Sorted by Skill Compatibility ⭐",
                     style = MaterialTheme.typography.labelSmall,
-                    color = BrandCyan
+                    color = SkyBlueDark
                 )
             }
             Spacer(modifier = Modifier.height(6.dp))
@@ -601,7 +601,7 @@ fun StudentDiscoveryView(
                 onValueChange = { viewModel.setStudentSearchQuery(it) },
                 placeholder = { Text("Search by skill (e.g. React, ML, UI/UX) or branch...") },
                 leadingIcon = {
-                    Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = BrandCyan)
+                    Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = SkyBluePrimary)
                 },
                 trailingIcon = {
                     if (uiState.studentSearchQuery.isNotEmpty()) {
@@ -686,19 +686,10 @@ fun StudentDiscoveryView(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = BrandIndigo.copy(alpha = 0.2f),
-                                modifier = Modifier.size(42.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(
-                                        text = student.name.take(1),
-                                        fontWeight = FontWeight.Bold,
-                                        color = BrandCyan
-                                    )
-                                }
-                            }
+                            StudentAvatar(
+                                student = student,
+                                size = 42.dp
+                            )
                             Column {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -794,8 +785,8 @@ fun StudentDiscoveryView(
                             .fillMaxWidth()
                             .testTag("btn_invite_student_${student.id}"),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = BrandCyan,
-                            contentColor = Color(0xFF00363D)
+                            containerColor = SkyBluePrimary,
+                            contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(8.dp),
                         contentPadding = PaddingValues(vertical = 8.dp)

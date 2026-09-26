@@ -76,17 +76,19 @@ data class StudentProfile(
     val contactPreference: String = "College Email & Discord",
     val bio: String = "",
     val projects: List<ProjectExperience> = emptyList(),
-    val isPublic: Boolean = true
+    val isPublic: Boolean = true,
+    val avatarPhotoUri: String? = null
 )
 
 enum class OpportunityCategory(val displayName: String, val iconEmoji: String) {
     HACKATHON("Hackathon", "🏆"),
     PROJECT("Project", "🚀"),
     COMPETITION("Competition", "🥇"),
-    CLUB("Club", "👥"),
+    CLUB("Club Recruitment", "👥"),
+    VOLUNTEERING("Volunteering", "🤝"),
     INTERNSHIP("Internship", "💼"),
     RESEARCH("Research", "🔬"),
-    VOLUNTEERING("Volunteering", "🤝")
+    SPORTS("Sports & Athletics", "⚽")
 }
 
 enum class OpportunityMode(val label: String) {
@@ -211,3 +213,17 @@ data class TeamResource(
     val url: String,
     val type: String // GitHub, Figma, Drive, Docs
 )
+
+data class SurveyChartItem(
+    val label: String,
+    val percentage: Float,
+    val count: Int,
+    val detail: String = ""
+)
+
+data class StudentQuote(
+    val quote: String,
+    val category: String,
+    val appSolution: String
+)
+

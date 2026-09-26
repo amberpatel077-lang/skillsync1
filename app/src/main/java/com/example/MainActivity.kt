@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.example.ui.screens.*
-import com.example.ui.theme.BrandCyan
 import com.example.ui.theme.DarkBg
 import com.example.ui.theme.MyApplicationTheme
 import com.example.viewmodel.AppTab
@@ -30,10 +29,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            MyApplicationTheme {
-                val uiState by viewModel.uiState.collectAsState()
-                val snackbarHostState = remember { SnackbarHostState() }
+            val uiState by viewModel.uiState.collectAsState()
+            val snackbarHostState = remember { SnackbarHostState() }
 
+            MyApplicationTheme(darkTheme = uiState.isDarkTheme) {
                 // Display snackbar message when userMessage is emitted
                 LaunchedEffect(uiState.userMessage) {
                     uiState.userMessage?.let { msg ->
@@ -44,40 +43,47 @@ class MainActivity : ComponentActivity() {
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    containerColor = DarkBg,
+                    containerColor = MaterialTheme.colorScheme.background,
                     snackbarHost = { SnackbarHost(snackbarHostState) },
                     bottomBar = {
-                        if (uiState.isAuthenticated) {
-                            NavigationBar(
-                                modifier = Modifier.testTag("bottom_nav_bar"),
-                                containerColor = MaterialTheme.colorScheme.surface,
-                                tonalElevation = 8.dp
-                            ) {
-                                AppTab.values().forEach { tab ->
-                                    val isSelected = uiState.activeTab == tab
-                                    NavigationBarItem(
-                                        selected = isSelected,
-                                        onClick = { viewModel.setTab(tab) },
-                                        icon = {
-                                            Icon(
-                                                imageVector = when (tab) {
-                                                    AppTab.HOME -> if (isSelected) Icons.Default.Home else Icons.Outlined.Home
-                                                    AppTab.EXPLORE -> if (isSelected) Icons.Default.Explore else Icons.Outlined.Explore
-                                                    AppTab.TEAMS -> if (isSelected) Icons.Default.Groups else Icons.Outlined.Groups
-                                                    AppTab.PROFILE -> if (isSelected) Icons.Default.Person else Icons.Outlined.Person
-                                                },
-                                                contentDescription = tab.title
-                                            )
-                                        },
-                                        label = { Text(tab.title) },
-                                        colors = NavigationBarItemDefaults.colors(
-                                            selectedIconColor = BrandCyan,
-                                            selectedTextColor = BrandCyan,
-                                            indicatorColor = BrandCyan.copy(alpha = 0.15f)
-                                        ),
-                                        modifier = Modifier.testTag("nav_item_${tab.name.lowercase()}")
-                                    )
-                                }
+                        NavigationBar(
+                            modifier = Modifier.testTag("bottom_nav_bar"),
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            tonalElevation = 8.dp
+                        ) {
+                            val bottomNavTabs = listOf(
+                                AppTab.HOME,
+                                AppTab.EXPLORE,
+                                AppTab.TEAMS,
+                                AppTab.PROFILE
+                            )
+                            bottomNavTabs.forEach { tab ->
+                                val isSelected = uiState.activeTab == tab
+                                NavigationBarItem(
+                                    selected = isSelected,
+                                    onClick = { viewModel.setTab(tab) },
+                                    icon = {
+                                        Icon(
+                                            imageVector = when (tab) {
+                                                AppTab.HOME -> if (isSelected) Icons.Default.Home else Icons.Outlined.Home
+                                                AppTab.EXPLORE -> if (isSelected) Icons.Default.Explore else Icons.Outlined.Explore
+                                                AppTab.TEAMS -> if (isSelected) Icons.Default.Groups else Icons.Outlined.Groups
+                                                AppTab.PROFILE -> if (isSelected) Icons.Default.Person else Icons.Outlined.Person
+                                                else -> Icons.Default.Home
+                                            },
+                                            contentDescription = tab.title
+                                        )
+                                    },
+                                    label = { Text(tab.title, maxLines = 1) },
+                                    colors = NavigationBarItemDefaults.colors(
+                                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                    ),
+                                    modifier = Modifier.testTag("nav_item_${tab.name.lowercase()}")
+                                )
                             }
                         }
                     }
@@ -87,15 +93,12 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .padding(innerPadding)
                     ) {
-                        if (!uiState.isAuthenticated) {
-                            AuthScreen(viewModel = viewModel)
-                        } else {
-                            when (uiState.activeTab) {
-                                AppTab.HOME -> HomeScreen(viewModel = viewModel)
-                                AppTab.EXPLORE -> ExploreScreen(viewModel = viewModel)
-                                AppTab.TEAMS -> TeamsScreen(viewModel = viewModel)
-                                AppTab.PROFILE -> ProfileScreen(viewModel = viewModel)
-                            }
+                        when (uiState.activeTab) {
+                            AppTab.HOME -> HomeScreen(viewModel = viewModel)
+                            AppTab.EXPLORE -> ExploreScreen(viewModel = viewModel)
+                            AppTab.TEAMS -> TeamsScreen(viewModel = viewModel)
+                            AppTab.SURVEY -> SurveyScreen(viewModel = viewModel)
+                            AppTab.PROFILE -> ProfileScreen(viewModel = viewModel)
                         }
                     }
                 }

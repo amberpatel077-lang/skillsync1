@@ -1,14 +1,23 @@
 package com.example.ui.screens
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -30,6 +39,7 @@ import com.example.model.*
 import com.example.ui.components.*
 import com.example.ui.theme.*
 import com.example.viewmodel.AppTab
+import com.example.viewmodel.ExploreSubTab
 import com.example.viewmodel.SkillSyncViewModel
 
 @Composable
@@ -42,13 +52,103 @@ fun HomeScreen(
     val recommendedOpps by viewModel.recommendedOpportunities.collectAsState()
     val activeTeam by viewModel.activeTeam.collectAsState()
     var showStudentSwitcher by remember { mutableStateOf(false) }
+    var showResearchSidePanel by remember { mutableStateOf(false) }
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .testTag("home_screen_column"),
-        contentPadding = PaddingValues(bottom = 96.dp)
-    ) {
+    BackHandler(enabled = showResearchSidePanel) {
+        showResearchSidePanel = false
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .testTag("home_screen_column"),
+            contentPadding = PaddingValues(bottom = 96.dp)
+        ) {
+        // App Top Brand Bar with Theme Logo
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(SkyBluePale)
+                            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(10.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_skillsync_logo),
+                            contentDescription = "SkillSync Logo",
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "SkillSync",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "College Innovation Network",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                // Navigation Panel Button at Corner Above of one side
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = SkyBluePale,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, SkyBluePrimary.copy(alpha = 0.5f)),
+                    modifier = Modifier
+                        .clickable { showResearchSidePanel = true }
+                        .testTag("top_corner_research_panel_button")
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Insights,
+                            contentDescription = null,
+                            tint = SkyBlueDark,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Text(
+                            text = "Research",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = SkyBlueDark,
+                            fontSize = 11.sp
+                        )
+                        Icon(
+                            imageVector = Icons.Default.MenuOpen,
+                            contentDescription = "Open Research Navigation Panel",
+                            tint = SkyBlueDark,
+                            modifier = Modifier.size(15.dp)
+                        )
+                    }
+                }
+            }
+        }
+
         // Hero Visual Banner
         item {
             Box(
@@ -62,7 +162,7 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
-                // Dark Gradient Scrim
+                // Gradient Scrim adapted to theme background
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -70,8 +170,8 @@ fun HomeScreen(
                             Brush.verticalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    DarkBg.copy(alpha = 0.75f),
-                                    DarkBg
+                                    MaterialTheme.colorScheme.background.copy(alpha = 0.75f),
+                                    MaterialTheme.colorScheme.background
                                 )
                             )
                         )
@@ -84,13 +184,14 @@ fun HomeScreen(
                         .padding(16.dp)
                 ) {
                     Surface(
-                        color = BrandIndigo.copy(alpha = 0.85f),
-                        shape = RoundedCornerShape(20.dp)
+                        color = BrandIndigo.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(20.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, BrandIndigo.copy(alpha = 0.3f))
                     ) {
                         Text(
                             text = "CONNECT • COLLABORATE • GROW",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color.White,
+                            color = BrandIndigo,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                             letterSpacing = 1.sp
@@ -103,12 +204,13 @@ fun HomeScreen(
                         text = "Turn Interests Into Impact",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.ExtraBold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
                         text = "Smart skill-based matching for college hackathons & projects",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFFCBD5E1)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
@@ -136,20 +238,11 @@ fun HomeScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = BrandCyan.copy(alpha = 0.2f),
-                                modifier = Modifier.size(46.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(
-                                        text = currentStudent?.name?.take(1) ?: "S",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = BrandCyan
-                                    )
-                                }
-                            }
+                            StudentAvatar(
+                                student = currentStudent,
+                                size = 46.dp,
+                                modifier = Modifier.clickable { viewModel.setTab(AppTab.PROFILE) }
+                            )
 
                             Column {
                                 Row(
@@ -265,12 +358,6 @@ fun HomeScreen(
             }
         }
 
-        // Design Thinking Survey Insight Card
-        item {
-            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
-                SurveyInsightCard()
-            }
-        }
 
         // Section: "⭐ Recommended for You"
         item {
@@ -298,7 +385,7 @@ fun HomeScreen(
                     }
 
                     TextButton(onClick = { viewModel.setTab(AppTab.EXPLORE) }) {
-                        Text("View All", color = BrandCyan, fontWeight = FontWeight.SemiBold)
+                        Text("View All", color = SkyBluePrimary, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -326,10 +413,10 @@ fun HomeScreen(
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                         .clickable { viewModel.setTab(AppTab.TEAMS) },
                     colors = CardDefaults.cardColors(
-                        containerColor = DarkSurfaceElevated
+                        containerColor = SkyBlueUltraPale
                     ),
                     shape = RoundedCornerShape(14.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, BrandIndigo.copy(alpha = 0.5f))
+                    border = androidx.compose.foundation.BorderStroke(1.dp, SkyBlueBorder)
                 ) {
                     Row(
                         modifier = Modifier
@@ -344,14 +431,14 @@ fun HomeScreen(
                         ) {
                             Surface(
                                 shape = CircleShape,
-                                color = BrandIndigo.copy(alpha = 0.25f),
+                                color = SkyBluePale,
                                 modifier = Modifier.size(40.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
                                         imageVector = Icons.Default.Groups,
                                         contentDescription = null,
-                                        tint = BrandCyan
+                                        tint = SkyBlueDark
                                     )
                                 }
                             }
@@ -375,7 +462,7 @@ fun HomeScreen(
                         Icon(
                             imageVector = Icons.Default.ChevronRight,
                             contentDescription = null,
-                            tint = BrandCyan
+                            tint = SkyBlueDark
                         )
                     }
                 }
@@ -411,8 +498,8 @@ fun HomeScreen(
                                     viewModel.switchStudent(student.id)
                                     showStudentSwitcher = false
                                 },
-                            color = if (isSelected) BrandCyan.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant,
-                            border = if (isSelected) androidx.compose.foundation.BorderStroke(1.dp, BrandCyan) else null
+                            color = if (isSelected) SkyBluePrimary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant,
+                            border = if (isSelected) androidx.compose.foundation.BorderStroke(1.dp, SkyBluePrimary) else null
                         ) {
                             Row(
                                 modifier = Modifier.padding(10.dp),
@@ -436,7 +523,7 @@ fun HomeScreen(
                                     Icon(
                                         imageVector = Icons.Default.CheckCircle,
                                         contentDescription = null,
-                                        tint = BrandCyan,
+                                        tint = SkyBluePrimary,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -451,5 +538,394 @@ fun HomeScreen(
                 }
             }
         )
+    }
+
+    // Modal Scrim for Side Navigation Panel
+    if (showResearchSidePanel) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.5f))
+                .clickable { showResearchSidePanel = false }
+                .testTag("research_panel_scrim")
+        )
+    }
+
+    // Side Navigation Panel at the corner above of one side
+    AnimatedVisibility(
+        visible = showResearchSidePanel,
+        enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+        exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+        modifier = Modifier.align(Alignment.CenterEnd)
+    ) {
+        DesignThinkingResearchSidePanel(
+            onClose = { showResearchSidePanel = false },
+            onNavigateToSurvey = {
+                showResearchSidePanel = false
+                viewModel.setTab(AppTab.SURVEY)
+            },
+            onNavigateToStudents = {
+                showResearchSidePanel = false
+                viewModel.setExploreSubTab(ExploreSubTab.STUDENTS)
+                viewModel.setTab(AppTab.EXPLORE)
+            },
+            onNavigateToTeams = {
+                showResearchSidePanel = false
+                viewModel.setTab(AppTab.TEAMS)
+            },
+            onNavigateToOpportunities = {
+                showResearchSidePanel = false
+                viewModel.setExploreSubTab(ExploreSubTab.OPPORTUNITIES)
+                viewModel.setTab(AppTab.EXPLORE)
+            }
+        )
+    }
+}
+}
+
+@Composable
+fun DesignThinkingResearchSidePanel(
+    onClose: () -> Unit,
+    onNavigateToSurvey: () -> Unit,
+    onNavigateToStudents: () -> Unit,
+    onNavigateToTeams: () -> Unit,
+    onNavigateToOpportunities: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxHeight()
+            .widthIn(max = 340.dp)
+            .fillMaxWidth(0.85f)
+            .testTag("research_side_navigation_panel"),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 16.dp,
+        tonalElevation = 4.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .padding(bottom = 20.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            // Panel Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(SkyBluePale)
+                            .border(1.dp, SkyBluePrimary.copy(alpha = 0.3f), RoundedCornerShape(8.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Insights,
+                            contentDescription = null,
+                            tint = SkyBlueDark,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "Research Panel",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = SkyBlueDeepNavy
+                        )
+                        Text(
+                            text = "Design Thinking Study",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = DarkTextSecondary
+                        )
+                    }
+                }
+
+                IconButton(
+                    onClick = onClose,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .testTag("btn_close_research_panel")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close Panel",
+                        tint = DarkTextSecondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            HorizontalDivider(color = SkyBlueBorder.copy(alpha = 0.5f))
+
+            // Study Context Banner
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = SkyBluePale,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, SkyBlueBorder)
+                ) {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.School,
+                                contentDescription = null,
+                                tint = SkyBlueDark,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = "SGSITS Indore Campus Study",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = SkyBlueDark
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "57 engineering students surveyed across CSE, IT, ECE, Mech, and Civil branches exploring hackathon team formation barriers.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = DarkTextSecondary,
+                            fontSize = 11.sp,
+                            lineHeight = 16.sp
+                        )
+                    }
+                }
+            }
+
+            // Key Research Findings Cards
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Key Research Insights",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = SkyBlueDeepNavy
+                )
+
+                ResearchPanelStatCard(
+                    metric = "70.2%",
+                    title = "Team Gap Barrier",
+                    description = "Missed deadlines and hackathon submissions due to missing skills in their teams.",
+                    accentColor = SkyBlueDark
+                )
+
+                ResearchPanelStatCard(
+                    metric = "87.7%",
+                    title = "Visible Verified Skills",
+                    description = "Students strongly require a public directory showing validated technical competencies.",
+                    accentColor = BrandIndigo
+                )
+
+                ResearchPanelStatCard(
+                    metric = "84.2%",
+                    title = "Limited Friend Circles",
+                    description = "Currently rely exclusively on immediate classmates and friends to form teams.",
+                    accentColor = BrandEmerald
+                )
+
+                ResearchPanelStatCard(
+                    metric = "63.2%",
+                    title = "Discovery Disconnect",
+                    description = "Unaware of available club recruitments, NSS drives, and research project openings.",
+                    accentColor = BrandAmber
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Navigation Actions inside the Panel
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Explore & Navigate",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = SkyBlueDeepNavy
+                )
+
+                Button(
+                    onClick = onNavigateToSurvey,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("btn_panel_open_survey"),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Poll,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Full Survey & Analytics",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
+
+                PanelNavigationCard(
+                    title = "Verified Student Directory",
+                    subtitle = "Browse peers by skill & branch",
+                    icon = Icons.Default.People,
+                    accentColor = SkyBlueDark,
+                    onClick = onNavigateToStudents
+                )
+
+                PanelNavigationCard(
+                    title = "Team Formation Matcher",
+                    subtitle = "Complementary skill match scoring",
+                    icon = Icons.Default.GroupAdd,
+                    accentColor = BrandIndigo,
+                    onClick = onNavigateToTeams
+                )
+
+                PanelNavigationCard(
+                    title = "Campus Hackathons & Fests",
+                    subtitle = "Discover active club & college drives",
+                    icon = Icons.Default.EmojiEvents,
+                    accentColor = BrandEmerald,
+                    onClick = onNavigateToOpportunities
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ResearchPanelStatCard(
+    metric: String,
+    title: String,
+    description: String,
+    accentColor: Color
+) {
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = accentColor.copy(alpha = 0.08f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, accentColor.copy(alpha = 0.25f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = metric,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = accentColor,
+                fontSize = 16.sp
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = SkyBlueDeepNavy
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = DarkTextSecondary,
+                    fontSize = 10.sp,
+                    lineHeight = 14.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun PanelNavigationCard(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    accentColor: Color,
+    onClick: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = accentColor.copy(alpha = 0.15f),
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.padding(5.dp)
+                    )
+                }
+                Column {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 11.sp
+                    )
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 10.sp
+                    )
+                }
+            }
+
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp)
+            )
+        }
     }
 }

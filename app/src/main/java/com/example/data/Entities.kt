@@ -29,7 +29,8 @@ data class StudentEntity(
     val contactPreference: String,
     val bio: String,
     val projectsRaw: String, // format: "title::desc::stack::role::url###..."
-    val isPublic: Boolean
+    val isPublic: Boolean,
+    val avatarPhotoUri: String? = null
 )
 
 @Entity(tableName = "opportunities")
@@ -182,7 +183,8 @@ fun StudentEntity.toDomain(): StudentProfile {
         contactPreference = contactPreference,
         bio = bio,
         projects = projects,
-        isPublic = isPublic
+        isPublic = isPublic,
+        avatarPhotoUri = avatarPhotoUri
     )
 }
 
@@ -216,7 +218,8 @@ fun StudentProfile.toEntity(): StudentEntity {
         contactPreference = contactPreference,
         bio = bio,
         projectsRaw = projectsRaw,
-        isPublic = isPublic
+        isPublic = isPublic,
+        avatarPhotoUri = avatarPhotoUri
     )
 }
 

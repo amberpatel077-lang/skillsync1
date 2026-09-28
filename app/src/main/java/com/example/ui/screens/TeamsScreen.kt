@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -48,6 +49,8 @@ fun TeamsScreen(
     val messages by viewModel.activeTeamMessages.collectAsState()
     val resources by viewModel.activeTeamResources.collectAsState()
     val invitations by viewModel.currentStudentInvitations.collectAsState()
+    val sentInvitations by viewModel.sentInvitations.collectAsState()
+    val receivedInvitations by viewModel.receivedInvitations.collectAsState()
     val currentStudent by viewModel.currentStudent.collectAsState()
     val allStudents by viewModel.students.collectAsState()
 
@@ -99,8 +102,10 @@ fun TeamsScreen(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Icon(imageVector = Icons.Default.Mail, contentDescription = null, modifier = Modifier.size(16.dp))
+                        val pendingReceived = receivedInvitations.count { it.status == InvitationStatus.PENDING }
+                        val totalInvites = receivedInvitations.size + sentInvitations.size
                         Text(
-                            text = if (invitations.isNotEmpty()) "Invitations (${invitations.count { it.status == InvitationStatus.PENDING }})" else "Invitations",
+                            text = if (totalInvites > 0) "Invitations ($totalInvites)" else "Invitations",
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -110,9 +115,11 @@ fun TeamsScreen(
         }
 
         if (activeSubSection == 1) {
-            // INVITATIONS VIEW
+            // INVITATIONS VIEW (Received + Sent)
             InvitationsListView(
-                invitations = invitations,
+                receivedInvitations = receivedInvitations,
+                sentInvitations = sentInvitations,
+                currentStudentId = currentStudent?.id ?: "",
                 onRespond = { inv, accepted -> viewModel.respondToInvitation(inv, accepted) }
             )
         } else {
@@ -174,7 +181,7 @@ fun TeamsScreen(
                                 .padding(16.dp),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                             shape = RoundedCornerShape(16.dp),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, SkyBlueBorder)
+                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                         ) {
                             Column {
                                 Image(
@@ -201,7 +208,7 @@ fun TeamsScreen(
                                         Text(
                                             text = "🔗 ${team.opportunityTitle}",
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = SkyBlueDark,
+                                            color = MaterialTheme.colorScheme.primary,
                                             fontWeight = FontWeight.SemiBold
                                         )
                                         Text(
@@ -267,7 +274,7 @@ fun TeamsScreen(
                                         text = title,
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected) SkyBlueDark else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                                     )
                                 }
@@ -449,13 +456,13 @@ fun TeamsScreen(
                                                     fontWeight = FontWeight.Bold
                                                 )
                                                 Surface(
-                                                    color = SkyBluePale,
+                                                    color = MaterialTheme.colorScheme.primaryContainer,
                                                     shape = RoundedCornerShape(4.dp)
                                                 ) {
                                                     Text(
                                                         text = member.role,
                                                         style = MaterialTheme.typography.labelSmall,
-                                                        color = SkyBlueDark,
+                                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                                                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                                         fontSize = 10.sp
                                                     )
@@ -493,7 +500,7 @@ fun TeamsScreen(
                                         fontWeight = FontWeight.Bold
                                     )
                                     TextButton(onClick = { showAddResourceDialog = true }) {
-                                        Text("+ Add Link", color = SkyBlueDark, fontWeight = FontWeight.Bold)
+                                        Text("+ Add Link", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -524,11 +531,11 @@ fun TeamsScreen(
                                             }
                                             Surface(
                                                 shape = CircleShape,
-                                                color = SkyBluePale,
+                                                color = MaterialTheme.colorScheme.primaryContainer,
                                                 modifier = Modifier.size(38.dp)
                                             ) {
                                                 Box(contentAlignment = Alignment.Center) {
-                                                    Icon(imageVector = icon, contentDescription = null, tint = SkyBlueDark, modifier = Modifier.size(20.dp))
+                                                    Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(20.dp))
                                                 }
                                             }
                                             Column {
@@ -684,7 +691,7 @@ fun ApplicationStatusStepper(
                         text = "Stage ${currentStatus.stepNumber}/6: ${currentStatus.title}",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = SkyBlueDark
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
 
@@ -721,27 +728,76 @@ fun ChatMessageBubble(
     currentStudentId: String
 ) {
     val isMe = msg.senderId == currentStudentId
-    val isSystem = msg.isSystemMessage
+    val isSystem = msg.isSystemMessage || msg.message.startsWith("📨")
     val timeStr = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(msg.timestamp))
 
     if (isSystem) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp),
+                .padding(horizontal = 16.dp, vertical = 6.dp),
             contentAlignment = Alignment.Center
         ) {
             Surface(
-                color = BrandIndigo.copy(alpha = 0.15f),
-                shape = RoundedCornerShape(12.dp)
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(12.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, BrandCyan.copy(alpha = 0.4f)),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = msg.message,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = BrandIndigo,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    fontSize = 11.sp
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Surface(
+                        color = BrandCyan.copy(alpha = 0.2f),
+                        shape = CircleShape,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.Send,
+                                contentDescription = null,
+                                tint = BrandCyan,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "TEAM INVITATION DISPATCHED",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = BrandCyan,
+                                letterSpacing = 0.8.sp
+                            )
+                            Text(
+                                text = "• $timeStr",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 10.sp
+                            )
+                        }
+                        Text(
+                            text = msg.message.removePrefix("📨 ").trim(),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontStyle = FontStyle.Italic,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Sent by ${msg.senderName} • Status: Dispatched ✓✓",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
     } else {
@@ -751,13 +807,15 @@ fun ChatMessageBubble(
                 .padding(horizontal = 16.dp, vertical = 4.dp),
             horizontalAlignment = if (isMe) Alignment.End else Alignment.Start
         ) {
-            Text(
-                text = "${msg.senderName} • $timeStr",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 10.sp,
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-            )
+            if (!isMe) {
+                Text(
+                    text = "${msg.senderName} • $timeStr",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 10.sp,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                )
+            }
 
             Surface(
                 color = if (isMe) BrandIndigo else MaterialTheme.colorScheme.surfaceVariant,
@@ -776,126 +834,397 @@ fun ChatMessageBubble(
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
+
+            if (isMe) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = "You • $timeStr",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 10.sp
+                    )
+                    Icon(
+                        imageVector = Icons.Default.DoneAll,
+                        contentDescription = "Delivered",
+                        tint = BrandCyan,
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Text(
+                        text = "Sent",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = BrandCyan,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InvitationsListView(
-    invitations: List<TeamInvitation>,
+    receivedInvitations: List<TeamInvitation>,
+    sentInvitations: List<TeamInvitation>,
+    currentStudentId: String,
     onRespond: (TeamInvitation, Boolean) -> Unit
 ) {
-    if (invitations.isEmpty()) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            contentAlignment = Alignment.Center
+    var selectedInviteTab by remember { mutableStateOf(0) } // 0: Received, 1: Sent by You
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Sub-tabs: Received vs Sent Invitations
+        TabRow(
+            selectedTabIndex = selectedInviteTab,
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = SkyBluePrimary
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(Icons.Default.MarkEmailRead, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("No pending invitations", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text("When students invite you to their team, you'll see them here.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            Tab(
+                selected = selectedInviteTab == 0,
+                onClick = { selectedInviteTab = 0 },
+                text = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.Inbox, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Text(
+                            text = "Received (${receivedInvitations.size})",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                },
+                modifier = Modifier.testTag("tab_invites_received")
+            )
+            Tab(
+                selected = selectedInviteTab == 1,
+                onClick = { selectedInviteTab = 1 },
+                text = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.Send, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Text(
+                            text = "Sent by You (${sentInvitations.size})",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+                },
+                modifier = Modifier.testTag("tab_invites_sent")
+            )
         }
-    } else {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .testTag("invitations_list"),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            items(invitations) { inv ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(14.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
+
+        if (selectedInviteTab == 1) {
+            // SENT INVITATIONS VIEW
+            if (sentInvitations.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = inv.teamName,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Surface(
-                                color = when (inv.status) {
-                                    InvitationStatus.PENDING -> BrandAmber.copy(alpha = 0.15f)
-                                    InvitationStatus.ACCEPTED -> BrandEmerald.copy(alpha = 0.15f)
-                                    InvitationStatus.DECLINED -> BrandRose.copy(alpha = 0.15f)
-                                },
-                                shape = RoundedCornerShape(6.dp)
-                            ) {
-                                Text(
-                                    text = inv.status.name,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = when (inv.status) {
-                                        InvitationStatus.PENDING -> BrandAmber
-                                        InvitationStatus.ACCEPTED -> BrandEmerald
-                                        InvitationStatus.DECLINED -> BrandRose
-                                    },
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Default.Send,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
                         Text(
-                            text = "Opportunity: ${inv.opportunityTitle}",
+                            text = "No invitations sent yet",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Find talented teammates in Explore > Students or using 'Find Teammates' on hackathon opportunities!",
                             style = MaterialTheme.typography.bodySmall,
-                            color = SkyBlueDark
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
-                        Text(
-                            text = "Invited by ${inv.fromStudentName}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        if (inv.note.isNotBlank()) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = "\"${inv.note}\"",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    modifier = Modifier.padding(8.dp),
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(10.dp))
-                        }
-
-                        if (inv.status == InvitationStatus.PENDING) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                OutlinedButton(
-                                    onClick = { onRespond(inv, false) },
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(8.dp)
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag("sent_invitations_list"),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(sentInvitations) { inv ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            shape = RoundedCornerShape(14.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                // Header: Dispatched Badge & Status
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Decline")
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Send,
+                                            contentDescription = null,
+                                            tint = SkyBluePrimary,
+                                            modifier = Modifier.size(15.dp)
+                                        )
+                                        Text(
+                                            text = "DISPATCHED INVITATION",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = SkyBluePrimary,
+                                            letterSpacing = 0.8.sp
+                                        )
+                                    }
+
+                                    Surface(
+                                        color = when (inv.status) {
+                                            InvitationStatus.PENDING -> BrandAmber.copy(alpha = 0.15f)
+                                            InvitationStatus.ACCEPTED -> BrandEmerald.copy(alpha = 0.15f)
+                                            InvitationStatus.DECLINED -> BrandRose.copy(alpha = 0.15f)
+                                        },
+                                        shape = RoundedCornerShape(6.dp)
+                                    ) {
+                                        Text(
+                                            text = inv.status.name,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = when (inv.status) {
+                                                InvitationStatus.PENDING -> BrandAmber
+                                                InvitationStatus.ACCEPTED -> BrandEmerald
+                                                InvitationStatus.DECLINED -> BrandRose
+                                            },
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = 0.4.sp
+                                        )
+                                    }
                                 }
 
-                                Button(
-                                    onClick = { onRespond(inv, true) },
-                                    modifier = Modifier.weight(1f),
-                                    colors = ButtonDefaults.buttonColors(containerColor = BrandEmerald),
-                                    shape = RoundedCornerShape(8.dp)
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Text(
+                                    text = "To: ${inv.toStudentName.ifEmpty { "Teammate Candidate" }}",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+
+                                Text(
+                                    text = "Opportunity: ${inv.opportunityTitle}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+
+                                val sentTimeStr = SimpleDateFormat("MMM d, yyyy • h:mm a", Locale.getDefault()).format(Date(inv.timestamp))
+                                Text(
+                                    text = "Sent on $sentTimeStr for ${inv.teamName}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                if (inv.note.isNotBlank()) {
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
+                                        shape = RoundedCornerShape(8.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            text = "\"${inv.note}\"",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontStyle = FontStyle.Italic,
+                                            modifier = Modifier.padding(10.dp),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                }
+
+                                // Status Footer
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Text("Accept & Join", fontWeight = FontWeight.Bold)
+                                    Icon(
+                                        imageVector = when (inv.status) {
+                                            InvitationStatus.PENDING -> Icons.Default.Schedule
+                                            InvitationStatus.ACCEPTED -> Icons.Default.CheckCircle
+                                            InvitationStatus.DECLINED -> Icons.Default.Cancel
+                                        },
+                                        contentDescription = null,
+                                        tint = when (inv.status) {
+                                            InvitationStatus.PENDING -> BrandAmber
+                                            InvitationStatus.ACCEPTED -> BrandEmerald
+                                            InvitationStatus.DECLINED -> BrandRose
+                                        },
+                                        modifier = Modifier.size(15.dp)
+                                    )
+                                    Text(
+                                        text = when (inv.status) {
+                                            InvitationStatus.PENDING -> "Awaiting candidate acceptance • Candidate notified"
+                                            InvitationStatus.ACCEPTED -> "Candidate accepted invitation & joined team! 🎉"
+                                            InvitationStatus.DECLINED -> "Candidate declined this invitation"
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontStyle = FontStyle.Italic,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            // RECEIVED INVITATIONS VIEW
+            if (receivedInvitations.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            Icons.Default.MarkEmailRead,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "No pending received invitations",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "When other students invite you to join their team, they will appear here.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag("invitations_list"),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(receivedInvitations) { inv ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                            shape = RoundedCornerShape(14.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = inv.teamName,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Surface(
+                                        color = when (inv.status) {
+                                            InvitationStatus.PENDING -> BrandAmber.copy(alpha = 0.15f)
+                                            InvitationStatus.ACCEPTED -> BrandEmerald.copy(alpha = 0.15f)
+                                            InvitationStatus.DECLINED -> BrandRose.copy(alpha = 0.15f)
+                                        },
+                                        shape = RoundedCornerShape(6.dp)
+                                    ) {
+                                        Text(
+                                            text = inv.status.name,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = when (inv.status) {
+                                                InvitationStatus.PENDING -> BrandAmber
+                                                InvitationStatus.ACCEPTED -> BrandEmerald
+                                                InvitationStatus.DECLINED -> BrandRose
+                                            },
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+
+                                Text(
+                                    text = "Opportunity: ${inv.opportunityTitle}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Invited by ${inv.fromStudentName}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                if (inv.note.isNotBlank()) {
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
+                                        shape = RoundedCornerShape(8.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            text = "\"${inv.note}\"",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontStyle = FontStyle.Italic,
+                                            modifier = Modifier.padding(8.dp),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                }
+
+                                if (inv.status == InvitationStatus.PENDING) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        OutlinedButton(
+                                            onClick = { onRespond(inv, false) },
+                                            modifier = Modifier.weight(1f),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ) {
+                                            Text("Decline")
+                                        }
+
+                                        Button(
+                                            onClick = { onRespond(inv, true) },
+                                            modifier = Modifier.weight(1f),
+                                            colors = ButtonDefaults.buttonColors(containerColor = BrandEmerald),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ) {
+                                            Text("Accept & Join", fontWeight = FontWeight.Bold)
+                                        }
+                                    }
                                 }
                             }
                         }

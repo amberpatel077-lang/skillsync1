@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 data class UiState(
-    val isAuthenticated: Boolean = true,
+    val isAuthenticated: Boolean = false,
     val authError: String? = null,
     val authSuccessMessage: String? = null,
     val currentStudentId: String = "student_amber",
@@ -85,10 +85,24 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
         list.find { it.id == state.currentStudentId } ?: list.firstOrNull()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    // Invitations for current student
+    // Invitations for current student (both sent & received)
     val currentStudentInvitations: StateFlow<List<TeamInvitation>> = _uiState.flatMapLatest { state ->
         repository.getInvitationsForStudent(state.currentStudentId)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val sentInvitations: StateFlow<List<TeamInvitation>> = combine(currentStudentInvitations, currentStudent) { list, student ->
+        if (student == null) emptyList()
+        else list.filter { it.fromStudentId == student.id }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val receivedInvitations: StateFlow<List<TeamInvitation>> = combine(currentStudentInvitations, currentStudent) { list, student ->
+        if (student == null) emptyList()
+        else list.filter { it.toStudentId == student.id }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val sentInvitationRecipientIds: StateFlow<Set<String>> = sentInvitations.map { list ->
+        list.map { it.toStudentId }.toSet()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptySet())
 
     // Active team details
     val activeTeam: StateFlow<Team?> = combine(teams, _uiState) { teamList, state ->
@@ -284,9 +298,18 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 opportunityTitle = oppTitle,
                 fromStudent = student,
                 toStudentId = targetStudent.id,
+                toStudentName = targetStudent.name,
                 note = note
             )
-            _uiState.update { it.copy(userMessage = "Invitation sent to ${targetStudent.name}! 🚀") }
+
+            // Post dispatch event into active team chat so team members see the invitation has been sent
+            repository.sendChatMessage(
+                teamId = teamId,
+                sender = student,
+                text = "📨 Dispatched invitation to ${targetStudent.name} (${targetStudent.branch}) • Note: \"$note\""
+            )
+
+            _uiState.update { it.copy(userMessage = "✓ Invitation dispatched to ${targetStudent.name}! 🚀 (Check Invitations & Chat)") }
         }
     }
 
@@ -696,8 +719,9 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
     fun logout() {
         _uiState.update {
             it.copy(
+                isAuthenticated = false,
                 activeTab = AppTab.HOME,
-                userMessage = "Active tab set to Home"
+                userMessage = "Logged out successfully"
             )
         }
     }

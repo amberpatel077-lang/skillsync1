@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
         TeamInvitationEntity::class,
         TeamResourceEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class SkillSyncDatabase : RoomDatabase() {
@@ -801,12 +801,26 @@ abstract class SkillSyncDatabase : RoomDatabase() {
                     fromStudentId = "student_amber",
                     fromStudentName = "Amber Patel",
                     toStudentId = "student_arjun",
+                    toStudentName = "Arjun Sharma",
                     note = "Hey Arjun! We noticed your strong Presentation and IoT skills. Our SIH team has 3/4 members and we'd love you to lead the pitch & hardware angle!",
                     status = "PENDING",
                     timestamp = System.currentTimeMillis() - 3600000L
+                ),
+                TeamInvitationEntity(
+                    id = "inv_2",
+                    teamId = "team_ai_vision",
+                    teamName = "VisionX Research",
+                    opportunityTitle = "AI Healthcare Innovation Challenge",
+                    fromStudentId = "student_priya",
+                    fromStudentName = "Priya Sharma",
+                    toStudentId = "student_amber",
+                    toStudentName = "Amber Patel",
+                    note = "Hi Amber! Your UI/UX and Kotlin skills would be amazing for our Computer Vision mobile prototype. Would you like to join?",
+                    status = "PENDING",
+                    timestamp = System.currentTimeMillis() - 1800000L
                 )
             )
-            dao.insertInvitation(invitations[0])
+            invitations.forEach { dao.insertInvitation(it) }
         }
     }
 }

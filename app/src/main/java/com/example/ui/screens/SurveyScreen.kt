@@ -79,8 +79,8 @@ fun SurveyScreen(
                     .fillMaxWidth()
                     .padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SkyBluePale),
-                border = androidx.compose.foundation.BorderStroke(1.dp, SkyBlueBorder)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Row(
@@ -111,7 +111,7 @@ fun SurveyScreen(
                                 text = "57 Verified Responses",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = SkyBlueDeepNavy
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -122,7 +122,7 @@ fun SurveyScreen(
                         text = "Student Skills, Team Formation, Volunteering & Club Recruitment",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = DarkTextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     Spacer(modifier = Modifier.height(6.dp))
@@ -130,7 +130,7 @@ fun SurveyScreen(
                     Text(
                         text = "Field survey of undergraduate engineering students at SGSITS Indore revealing critical gaps in finding multidisciplinary teammates and discovering college opportunities.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = DarkTextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 18.sp
                     )
 
@@ -181,7 +181,7 @@ fun SurveyScreen(
                             Text(
                                 text = title,
                                 fontWeight = if (selectedSection == index) FontWeight.Bold else FontWeight.Medium,
-                                color = if (selectedSection == index) SkyBluePrimary else DarkTextSecondary
+                                color = if (selectedSection == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     )
@@ -328,7 +328,7 @@ fun SurveyScreen(
                             text = "Direct Student Suggestions & Implemented Solutions",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = DarkTextPrimary
+                            color = MaterialTheme.colorScheme.onSurface
                         )
 
                         val feedbackList = listOf(
@@ -374,8 +374,8 @@ fun SurveyScreen(
                     .fillMaxWidth()
                     .padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SkyBlueUltraPale),
-                border = androidx.compose.foundation.BorderStroke(1.dp, SkyBlueBorder)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
                 Column(
                     modifier = Modifier.padding(18.dp),
@@ -385,13 +385,13 @@ fun SurveyScreen(
                         text = "Ready to form your dream team?",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = SkyBlueDeepNavy
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "SkillSync solves the 70.2% team gap by syncing verified talent across all 8 branches.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = DarkTextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 8.dp)
                     )
                     Spacer(modifier = Modifier.height(14.dp))
@@ -448,7 +448,7 @@ private fun HighlightChip(
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.labelSmall,
-                color = DarkTextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -469,14 +469,14 @@ private fun SurveyCard(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = androidx.compose.foundation.BorderStroke(1.dp, SkyBlueBorder.copy(alpha = 0.7f))
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
-                color = SkyBlueDeepNavy
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -484,7 +484,7 @@ private fun SurveyCard(
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
-                color = DarkTextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp
             )
 
@@ -513,7 +513,7 @@ private fun ChartBarRow(
                 text = item.label,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.SemiBold,
-                color = DarkTextPrimary,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
             )
             Text(
@@ -532,7 +532,7 @@ private fun ChartBarRow(
                 .fillMaxWidth()
                 .height(8.dp)
                 .clip(RoundedCornerShape(4.dp))
-                .background(SkyBluePale)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Box(
                 modifier = Modifier
@@ -548,7 +548,7 @@ private fun ChartBarRow(
             Text(
                 text = item.detail,
                 style = MaterialTheme.typography.labelSmall,
-                color = DarkTextTertiary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 10.sp
             )
         }
@@ -561,17 +561,17 @@ private fun StudentVoiceCard(item: StudentQuote) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = androidx.compose.foundation.BorderStroke(1.dp, SkyBlueBorder)
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Surface(
                 shape = RoundedCornerShape(6.dp),
-                color = SkyBluePale
+                color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Text(
                     text = item.category,
                     style = MaterialTheme.typography.labelSmall,
-                    color = SkyBlueDark,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                 )
@@ -583,7 +583,7 @@ private fun StudentVoiceCard(item: StudentQuote) {
                 text = "“${item.quote}”",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = DarkTextPrimary,
+                color = MaterialTheme.colorScheme.onSurface,
                 lineHeight = 20.sp
             )
 
@@ -591,8 +591,8 @@ private fun StudentVoiceCard(item: StudentQuote) {
 
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = SkyBlueUltraPale,
-                border = androidx.compose.foundation.BorderStroke(1.dp, SkyBlueBorder.copy(alpha = 0.5f))
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
                 Row(
                     modifier = Modifier.padding(10.dp),
@@ -615,7 +615,7 @@ private fun StudentVoiceCard(item: StudentQuote) {
                         Text(
                             text = item.appSolution,
                             style = MaterialTheme.typography.bodySmall,
-                            color = DarkTextSecondary,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 12.sp,
                             lineHeight = 16.sp
                         )

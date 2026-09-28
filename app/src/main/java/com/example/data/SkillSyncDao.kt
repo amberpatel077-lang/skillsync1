@@ -97,8 +97,11 @@ interface SkillSyncDao {
     suspend fun insertChatMessages(messages: List<TeamChatMessageEntity>)
 
     // Team Invitations
-    @Query("SELECT * FROM team_invitations WHERE toStudentId = :studentId ORDER BY timestamp DESC")
+    @Query("SELECT * FROM team_invitations WHERE toStudentId = :studentId OR fromStudentId = :studentId ORDER BY timestamp DESC")
     fun getInvitationsForStudent(studentId: String): Flow<List<TeamInvitationEntity>>
+
+    @Query("SELECT * FROM team_invitations WHERE fromStudentId = :studentId ORDER BY timestamp DESC")
+    fun getSentInvitationsByStudent(studentId: String): Flow<List<TeamInvitationEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertInvitation(invitation: TeamInvitationEntity)

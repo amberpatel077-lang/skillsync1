@@ -79,7 +79,7 @@ fun MatchScoreBadge(
     modifier: Modifier = Modifier
 ) {
     val (bgColor, textColor, label) = when {
-        score >= 85 -> Triple(SkyBluePale, SkyBlueDark, "High Match")
+        score >= 85 -> Triple(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, "High Match")
         score >= 70 -> Triple(BrandEmerald.copy(alpha = 0.15f), BrandEmerald, "Good Match")
         else -> Triple(BrandAmber.copy(alpha = 0.15f), BrandAmber, "Partial Fit")
     }
@@ -257,7 +257,7 @@ fun OpportunityCard(
                     Text(
                         text = "${opportunity.currentMembersCount}/${opportunity.teamSizeMax} Members",
                         style = MaterialTheme.typography.labelSmall,
-                        color = SkyBlueDark,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -406,12 +406,12 @@ fun SurveyInsightCard(
                             text = "Campus Survey & Research Insights",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
-                            color = SkyBlueDeepNavy
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = "57 students surveyed across CSE, IT, ECE, Mech, Civil",
                             style = MaterialTheme.typography.labelSmall,
-                            color = DarkTextSecondary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -420,7 +420,7 @@ fun SurveyInsightCard(
                     Icon(
                         imageVector = Icons.Default.ChevronRight,
                         contentDescription = "View Details",
-                        tint = SkyBlueDark,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -442,7 +442,7 @@ fun SurveyInsightCard(
                 Text(
                     text = "Tap to explore full 57 responses analysis & charts →",
                     style = MaterialTheme.typography.labelSmall,
-                    color = SkyBlueDark,
+                    color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 11.sp
                 )
@@ -458,12 +458,12 @@ private fun StatItem(metric: String, label: String) {
             text = metric,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.ExtraBold,
-            color = SkyBlueDark
+            color = MaterialTheme.colorScheme.primary
         )
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = DarkTextSecondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 10.sp
         )
     }
@@ -556,12 +556,12 @@ fun PillarCard(
                     text = title,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
-                    color = DarkTextPrimary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.labelSmall,
-                    color = DarkTextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 11.sp
                 )
             }

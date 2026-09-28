@@ -154,6 +154,7 @@ class SkillSyncRepository(private val dao: SkillSyncDao) {
         opportunityTitle: String,
         fromStudent: StudentProfile,
         toStudentId: String,
+        toStudentName: String = "",
         note: String
     ) {
         val inv = TeamInvitationEntity(
@@ -164,6 +165,7 @@ class SkillSyncRepository(private val dao: SkillSyncDao) {
             fromStudentId = fromStudent.id,
             fromStudentName = fromStudent.name,
             toStudentId = toStudentId,
+            toStudentName = toStudentName,
             note = note,
             status = InvitationStatus.PENDING.name,
             timestamp = System.currentTimeMillis()
@@ -185,6 +187,7 @@ class SkillSyncRepository(private val dao: SkillSyncDao) {
             fromStudentId = invitation.fromStudentId,
             fromStudentName = invitation.fromStudentName,
             toStudentId = invitation.toStudentId,
+            toStudentName = invitation.toStudentName,
             note = invitation.note,
             status = newStatus.name,
             timestamp = invitation.timestamp

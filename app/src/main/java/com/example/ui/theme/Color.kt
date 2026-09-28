@@ -22,17 +22,22 @@ val BrandRose = Color(0xFFE11D48)           // Rose 600
 val BrandPink = SkyBlueLight                // Sky 400
 
 // Dark/Light Theme Surfaces (Sky Blue Theme)
-val DarkBg = SkyBlueUltraPale
-val DarkSurface = Color(0xFFFFFFFF)
-val DarkSurfaceElevated = SkyBluePale
-val DarkSurfaceCard = Color(0xFFFFFFFF)
-val DarkBorder = SkyBlueBorder
-val DarkTextPrimary = SkyBlueDeepNavy       // Deep Sky Navy 900 (sharp, high-contrast dark text)
-val DarkTextSecondary = Color(0xFF1E293B)   // Slate 800 (very dark, highly legible)
-val DarkTextTertiary = Color(0xFF334155)    // Slate 700 (dark readable)
+val DarkThemeBg = Color(0xFF0A0F1D)         // Deep dark night background
+val DarkThemeSurface = Color(0xFF111827)    // Elevated card surface (Slate 900)
+val DarkThemeSurfaceVariant = Color(0xFF1E293B) // Dark container (Slate 800)
+val DarkThemeOutline = Color(0xFF334155)    // Dark border (Slate 700)
+
+val DarkBg = Color(0xFF0A0F1D)
+val DarkSurface = Color(0xFF111827)
+val DarkSurfaceElevated = Color(0xFF1E293B)
+val DarkSurfaceCard = Color(0xFF111827)
+val DarkBorder = Color(0xFF334155)
+val DarkTextPrimary = Color(0xFFF8FAFC)     // Slate 50 - Crisp high contrast white
+val DarkTextSecondary = Color(0xFF94A3B8)   // Slate 400 - Highly legible silver
+val DarkTextTertiary = Color(0xFF64748B)    // Slate 500 - Muted secondary
 
 val SurfaceCard = Color(0xFFFFFFFF)
-val SurfaceDark = SkyBlueUltraPale
+val SurfaceDark = Color(0xFF0A0F1D)
 val CardStroke = SkyBlueBorder
 val SuccessGreen = BrandEmerald
 

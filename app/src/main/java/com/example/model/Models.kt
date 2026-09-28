@@ -201,6 +201,7 @@ data class TeamInvitation(
     val fromStudentId: String,
     val fromStudentName: String,
     val toStudentId: String,
+    val toStudentName: String = "",
     val note: String,
     val status: InvitationStatus = InvitationStatus.PENDING,
     val timestamp: Long = System.currentTimeMillis()

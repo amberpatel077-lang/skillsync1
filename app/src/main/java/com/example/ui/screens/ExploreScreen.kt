@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -485,7 +486,7 @@ fun OpportunityHubView(
                         Text(
                             text = title,
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (isSelected) SkyBlueDark else MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                         )
@@ -513,7 +514,7 @@ fun OpportunityHubView(
                 Text(
                     text = "Sorted by Skill Compatibility ⭐",
                     style = MaterialTheme.typography.labelSmall,
-                    color = SkyBlueDark
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
             Spacer(modifier = Modifier.height(6.dp))
@@ -562,6 +563,7 @@ fun StudentDiscoveryView(
     uiState: com.example.viewmodel.UiState,
     onInviteStudent: (StudentProfile) -> Unit
 ) {
+    val sentInvitationRecipientIds by viewModel.sentInvitationRecipientIds.collectAsState()
     val branches = listOf("CSE", "IT", "ECE", "MECH", "CIVIL")
     val skills = listOf("React", "Python", "Machine Learning", "UI/UX", "Presentation", "IoT/Electronics", "Cloud/DevOps")
 
@@ -778,22 +780,96 @@ fun StudentDiscoveryView(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Action Button: Invite
-                    Button(
-                        onClick = { onInviteStudent(student) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("btn_invite_student_${student.id}"),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = SkyBluePrimary,
-                            contentColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(vertical = 8.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.PersonAdd, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Invite to Team", fontWeight = FontWeight.Bold)
+                    // Action Button or Dispatched Status
+                    val isAlreadyInvited = sentInvitationRecipientIds.contains(student.id)
+                    if (isAlreadyInvited) {
+                        Surface(
+                            color = BrandEmerald.copy(alpha = 0.12f),
+                            shape = RoundedCornerShape(10.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, BrandEmerald.copy(alpha = 0.4f)),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("status_invitation_sent_${student.id}")
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.CheckCircle,
+                                            contentDescription = null,
+                                            tint = BrandEmerald,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Text(
+                                            text = "INVITATION SENT",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = BrandEmerald,
+                                            letterSpacing = 0.6.sp
+                                        )
+                                    }
+                                    Surface(
+                                        color = BrandAmber.copy(alpha = 0.2f),
+                                        shape = RoundedCornerShape(4.dp)
+                                    ) {
+                                        Text(
+                                            text = "Pending",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = BrandAmber,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = "Invitation dispatched to ${student.name} • Awaiting student response",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontStyle = FontStyle.Italic,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                TextButton(
+                                    onClick = { onInviteStudent(student) },
+                                    contentPadding = PaddingValues(0.dp),
+                                    modifier = Modifier.height(28.dp)
+                                ) {
+                                    Text(
+                                        text = "Resend or Update Note →",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        // Action Button: Invite
+                        Button(
+                            onClick = { onInviteStudent(student) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("btn_invite_student_${student.id}"),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = SkyBluePrimary,
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(vertical = 8.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.PersonAdd, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Invite to Team", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }

@@ -197,7 +197,7 @@ fun ProfileScreen(
                             Text(
                                 text = "${student.branch} • ${student.year}",
                                 style = MaterialTheme.typography.labelMedium,
-                                color = SkyBlueDark,
+                                color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -343,7 +343,7 @@ fun ProfileScreen(
                                                 text = skill.level.displayName,
                                                 color = when (skill.level) {
                                                     SkillLevel.ADVANCED -> BrandEmerald
-                                                    SkillLevel.INTERMEDIATE -> SkyBlueDark
+                                                    SkillLevel.INTERMEDIATE -> MaterialTheme.colorScheme.primary
                                                     SkillLevel.BEGINNER -> BrandAmber
                                                 },
                                                 style = MaterialTheme.typography.labelSmall,
@@ -404,7 +404,7 @@ fun ProfileScreen(
                             availUntil = student.availability.availableUntil
                             showEditAvailabilityDialog = true
                         }) {
-                            Text("Edit", color = SkyBlueDark, fontWeight = FontWeight.Bold)
+                            Text("Edit", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         }
                     }
 
@@ -534,7 +534,7 @@ fun ProfileScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Text(proj.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
-                                        Text(proj.role, color = SkyBlueDark, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
+                                        Text(proj.role, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold)
                                     }
                                     Text(proj.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     Spacer(modifier = Modifier.height(4.dp))
@@ -603,27 +603,44 @@ fun ProfileScreen(
                     ) {
                         Surface(
                             shape = CircleShape,
-                            color = if (uiState.isDarkTheme) BrandIndigo.copy(alpha = 0.15f) else BrandAmber.copy(alpha = 0.15f),
+                            color = if (uiState.isDarkTheme) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else BrandAmber.copy(alpha = 0.15f),
                             modifier = Modifier.size(38.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = if (uiState.isDarkTheme) Icons.Default.DarkMode else Icons.Default.LightMode,
                                     contentDescription = null,
-                                    tint = if (uiState.isDarkTheme) BrandIndigo else BrandAmber,
+                                    tint = if (uiState.isDarkTheme) MaterialTheme.colorScheme.primary else BrandAmber,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
                         Column {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = "Light Theme",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Surface(
+                                    shape = RoundedCornerShape(4.dp),
+                                    color = if (!uiState.isDarkTheme) BrandAmber.copy(alpha = 0.15f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                                ) {
+                                    Text(
+                                        text = if (!uiState.isDarkTheme) "ON" else "OFF (DARK ACTIVE)",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = if (!uiState.isDarkTheme) BrandAmber else MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
                             Text(
-                                text = if (uiState.isDarkTheme) "Dark Theme" else "Light Theme",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = if (uiState.isDarkTheme) "Dark mode enabled" else "Pristine light mode active",
+                                text = if (!uiState.isDarkTheme) "Disable this switch to activate dark theme with inverted dark background & night fonts" else "Light theme disabled • Inverted deep dark background & night fonts active",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -715,7 +732,7 @@ fun ProfileScreen(
                                     showSwitchPersonaDialog = false
                                 },
                             shape = RoundedCornerShape(10.dp),
-                            color = if (isCurrent) SkyBluePale else MaterialTheme.colorScheme.surfaceVariant,
+                            color = if (isCurrent) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                             border = if (isCurrent) androidx.compose.foundation.BorderStroke(1.dp, SkyBluePrimary) else null
                         ) {
                             Row(

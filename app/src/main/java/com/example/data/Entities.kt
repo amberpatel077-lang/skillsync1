@@ -111,6 +111,7 @@ data class TeamInvitationEntity(
     val fromStudentId: String,
     val fromStudentName: String,
     val toStudentId: String,
+    val toStudentName: String = "",
     val note: String,
     val status: String, // PENDING, ACCEPTED, DECLINED
     val timestamp: Long
@@ -337,6 +338,7 @@ fun TeamInvitationEntity.toDomain(): TeamInvitation {
         fromStudentId = fromStudentId,
         fromStudentName = fromStudentName,
         toStudentId = toStudentId,
+        toStudentName = toStudentName,
         note = note,
         status = statusEnum,
         timestamp = timestamp

@@ -38,6 +38,7 @@ fun FindTeammatesSheet(
     val opp = opportunities.find { it.id == opportunityId } ?: opportunities.firstOrNull()
     val teammateMatches by viewModel.teammateMatches.collectAsState()
     val activeTeamMembers by viewModel.activeTeamMembers.collectAsState()
+    val sentInvitationRecipientIds by viewModel.sentInvitationRecipientIds.collectAsState()
 
     var selectedCandidateForDetail by remember { mutableStateOf<StudentProfile?>(null) }
     var inviteCandidateDialog by remember { mutableStateOf<StudentProfile?>(null) }
@@ -75,7 +76,7 @@ fun FindTeammatesSheet(
                     Text(
                         text = opp?.title ?: "Opportunity",
                         style = MaterialTheme.typography.bodySmall,
-                        color = SkyBlueDark,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -91,9 +92,9 @@ fun FindTeammatesSheet(
 
             // Roster Status & Skill Gap Analysis
             Card(
-                colors = CardDefaults.cardColors(containerColor = SkyBluePale),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 shape = RoundedCornerShape(12.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, SkyBlueBorder),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
@@ -106,7 +107,7 @@ fun FindTeammatesSheet(
                             text = "Your Team: ${activeTeamMembers.size}/${opp?.teamSizeMax ?: 4} Members",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
-                            color = SkyBlueDeepNavy
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Surface(
                             color = BrandEmerald.copy(alpha = 0.15f),
@@ -128,7 +129,7 @@ fun FindTeammatesSheet(
                     Text(
                         text = "Algorithm prioritizes candidates who fill your missing skills (Presentation, UI/UX, Cloud) without duplicating already covered skills.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = DarkTextSecondary,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 11.sp
                     )
                 }
@@ -140,7 +141,7 @@ fun FindTeammatesSheet(
                 text = "Recommended Teammates (${teammateMatches.size})",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = SkyBlueDeepNavy
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -253,7 +254,7 @@ fun FindTeammatesSheet(
                                 ) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text("Skill (50%)", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text("${breakdown.skillScore}/50", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = SkyBlueDark)
+                                        Text("${breakdown.skillScore}/50", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
                                     }
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text("Interest (20%)", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -296,24 +297,63 @@ fun FindTeammatesSheet(
                                     Text("View Profile", fontSize = 13.sp)
                                 }
 
-                                Button(
-                                    onClick = {
-                                        inviteCandidateDialog = candidate
-                                        inviteNoteText = "Hey ${candidate.name}! We're forming a team for ${opp?.title ?: "SIH 2026"} and your skills in ${candidate.skills.take(2).joinToString(", ") { it.name }} are a perfect complementary fit. Let's win this together!"
-                                    },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .testTag("btn_invite_${candidate.id}"),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = SkyBluePrimary,
-                                        contentColor = Color.White
-                                    ),
-                                    shape = RoundedCornerShape(8.dp),
-                                    contentPadding = PaddingValues(vertical = 8.dp)
-                                ) {
-                                    Icon(imageVector = Icons.Default.Send, contentDescription = null, modifier = Modifier.size(14.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Invite", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                val isAlreadyInvited = sentInvitationRecipientIds.contains(candidate.id)
+                                if (isAlreadyInvited) {
+                                    Surface(
+                                        color = BrandEmerald.copy(alpha = 0.15f),
+                                        shape = RoundedCornerShape(8.dp),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, BrandEmerald.copy(alpha = 0.5f)),
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clickable {
+                                                inviteCandidateDialog = candidate
+                                                inviteNoteText = "Hey ${candidate.name}! Following up on our invitation for ${opp?.title ?: "the team"}."
+                                            }
+                                            .testTag("btn_invite_sent_${candidate.id}")
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 8.dp),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.CheckCircle,
+                                                contentDescription = null,
+                                                tint = BrandEmerald,
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = "Sent ✓",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 13.sp,
+                                                color = BrandEmerald,
+                                                letterSpacing = 0.4.sp
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Button(
+                                        onClick = {
+                                            inviteCandidateDialog = candidate
+                                            inviteNoteText = "Hey ${candidate.name}! We're forming a team for ${opp?.title ?: "SIH 2026"} and your skills in ${candidate.skills.take(2).joinToString(", ") { it.name }} are a perfect complementary fit. Let's win this together!"
+                                        },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .testTag("btn_invite_${candidate.id}"),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = SkyBluePrimary,
+                                            contentColor = Color.White
+                                        ),
+                                        shape = RoundedCornerShape(8.dp),
+                                        contentPadding = PaddingValues(vertical = 8.dp)
+                                    ) {
+                                        Icon(imageVector = Icons.Default.Send, contentDescription = null, modifier = Modifier.size(14.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Invite", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                    }
                                 }
                             }
                         }
@@ -349,7 +389,7 @@ fun FindTeammatesSheet(
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(skill.iconEmoji)
                             Text(skill.name, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodySmall)
-                            Text("(${skill.level.displayName})", color = SkyBlueDark, style = MaterialTheme.typography.labelSmall)
+                            Text("(${skill.level.displayName})", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
                         }
                     }
 

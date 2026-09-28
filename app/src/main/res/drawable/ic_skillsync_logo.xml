@@ -6,10 +6,10 @@
     android:viewportWidth="96"
     android:viewportHeight="96">
 
-    <!-- Background rounded squircle container -->
+    <!-- Transparent background so logo adapts seamlessly to light & dark themes -->
     <path
         android:pathData="M24,8 L72,8 C82.8,8 90,15.2 90,26 L90,70 C90,80.8 82.8,88 72,88 L24,88 C13.2,88 6,80.8 6,70 L6,26 C6,15.2 13.2,8 24,8 Z"
-        android:fillColor="#E0F2FE" />
+        android:fillColor="#00000000" />
 
     <!-- Left loop of infinity ribbon -->
     <path

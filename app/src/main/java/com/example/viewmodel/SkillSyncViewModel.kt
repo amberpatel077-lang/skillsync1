@@ -30,7 +30,6 @@ data class UiState(
     val studentSkillFilter: String? = null,
     val isDarkTheme: Boolean = false,
     val userMessage: String? = null,
-    val isSurveyFormOpen: Boolean = false,
     val selectedClubForApplication: Opportunity? = null,
     val selectedVolunteerForRegistration: Opportunity? = null
 )
@@ -783,14 +782,6 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
         _uiState.update { it.copy(authError = null) }
     }
 
-    fun openSurveyForm() {
-        _uiState.update { it.copy(isSurveyFormOpen = true) }
-    }
-
-    fun closeSurveyForm() {
-        _uiState.update { it.copy(isSurveyFormOpen = false) }
-    }
-
     fun openClubApplication(opp: Opportunity) {
         _uiState.update { it.copy(selectedClubForApplication = opp) }
     }
@@ -895,7 +886,6 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
         _surveySubmissions.update { listOf(submission) + it }
         _uiState.update {
             it.copy(
-                isSurveyFormOpen = false,
                 userMessage = "Survey submitted successfully! Your campus voice has been recorded. 🌟"
             )
         }

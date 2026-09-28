@@ -123,14 +123,6 @@ class MainActivity : ComponentActivity() {
                             onDismiss = { viewModel.closeFindTeammates() }
                         )
                     }
-
-                    // Interactive Google Form Survey Dialog
-                    if (uiState.isSurveyFormOpen) {
-                        com.example.ui.components.GoogleFormSurveyDialog(
-                            viewModel = viewModel,
-                            onDismiss = { viewModel.closeSurveyForm() }
-                        )
-                    }
                 }
             }
         }

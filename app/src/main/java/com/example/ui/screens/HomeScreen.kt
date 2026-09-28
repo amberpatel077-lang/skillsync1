@@ -2,14 +2,18 @@ package com.example.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -25,6 +29,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -49,7 +54,6 @@ fun HomeScreen(
 ) {
     val currentStudent by viewModel.currentStudent.collectAsState()
     val allStudents by viewModel.students.collectAsState()
-    val recommendedOpps by viewModel.recommendedOpportunities.collectAsState()
     val activeTeam by viewModel.activeTeam.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
     var showStudentSwitcher by remember { mutableStateOf(false) }
@@ -369,160 +373,237 @@ fun HomeScreen(
         }
 
 
-        // Quick Campus Discovery Shortcuts (Clubs, Volunteering, Teammates, Hackathons)
+        // Section: Explore Campus Opportunities (Bigger, Full-Width Mobile Bars)
         item {
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
-                Text(
-                    text = "Explore Campus Opportunities",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // Club Recruitment Pill
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = BrandIndigo.copy(alpha = 0.1f),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, BrandIndigo.copy(alpha = 0.3f)),
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable {
-                                viewModel.setTab(AppTab.EXPLORE)
-                                viewModel.setExploreSubTab(ExploreSubTab.CLUBS)
-                            }
-                            .testTag("btn_shortcut_clubs")
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(10.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("👥", fontSize = 20.sp)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text("Clubs", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = BrandIndigo)
-                            Text("ACM • GDSC", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 9.sp)
-                        }
-                    }
-
-                    // Volunteering Pill
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = BrandEmerald.copy(alpha = 0.1f),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, BrandEmerald.copy(alpha = 0.3f)),
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable {
-                                viewModel.setTab(AppTab.EXPLORE)
-                                viewModel.setExploreSubTab(ExploreSubTab.VOLUNTEERING)
-                            }
-                            .testTag("btn_shortcut_volunteering")
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(10.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("🤝", fontSize = 20.sp)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text("Volunteer", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = BrandEmerald)
-                            Text("NSS • Aayam", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 9.sp)
-                        }
-                    }
-
-                    // Find Teammates Pill
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = SkyBluePrimary.copy(alpha = 0.1f),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, SkyBluePrimary.copy(alpha = 0.3f)),
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable {
-                                viewModel.setTab(AppTab.EXPLORE)
-                                viewModel.setExploreSubTab(ExploreSubTab.STUDENTS)
-                            }
-                            .testTag("btn_shortcut_peers")
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(10.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("🔍", fontSize = 20.sp)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text("Find Peers", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = SkyBlueDark)
-                            Text("All Branches", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 9.sp)
-                        }
-                    }
-
-                    // Teams Pill
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = BrandPurple.copy(alpha = 0.1f),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, BrandPurple.copy(alpha = 0.3f)),
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable {
-                                viewModel.setTab(AppTab.TEAMS)
-                            }
-                            .testTag("btn_shortcut_teams")
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(10.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("⚡", fontSize = 20.sp)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text("My Teams", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = BrandPurple)
-                            Text("Workspace", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 9.sp)
-                        }
-                    }
-                }
-            }
-        }
-
-        // Section: "⭐ Recommended for You"
-        item {
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 6.dp)
+            ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(text = "⭐", fontSize = 16.sp)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Explore,
+                                contentDescription = null,
+                                tint = SkyBluePrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
                             Text(
-                                text = "Recommended for You",
+                                text = "Explore Campus Opportunities",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                         }
                         Text(
-                            text = "AI-matched to your skills, interests & schedule",
-                            style = MaterialTheme.typography.labelSmall,
+                            text = "Discover clubs, volunteer drives, teammates & competitions",
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
 
-                    TextButton(onClick = { viewModel.setTab(AppTab.EXPLORE) }) {
-                        Text("View All", color = SkyBluePrimary, fontWeight = FontWeight.SemiBold)
+                    TextButton(
+                        onClick = {
+                            viewModel.setOppSearchQuery("")
+                            viewModel.setExploreSubTab(ExploreSubTab.OPPORTUNITIES)
+                            viewModel.setTab(AppTab.EXPLORE)
+                        },
+                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                    ) {
+                        Text(
+                            text = "Browse Hub",
+                            color = SkyBluePrimary,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp
+                        )
                     }
                 }
-            }
-        }
 
-        // Recommended Opportunities Cards
-        items(recommendedOpps) { (opp, score) ->
-            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
-                OpportunityCard(
-                    opportunity = opp,
-                    matchScore = score,
-                    currentStudent = currentStudent,
-                    onCardClick = { viewModel.selectOpportunity(opp.id) },
-                    onFindTeammatesClick = { viewModel.openFindTeammates(opp.id) }
-                )
+                // Zero gap between heading and opportunities: 2 in a row
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 0.dp)
+                ) {
+                    // Row 1: Clubs & Chapters | Campus Volunteering
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Max),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        CampusOpportunityBar(
+                            title = "Clubs & Chapters",
+                            badgeText = "SGSITS Inductions",
+                            liveStatusText = "Active",
+                            description = "Join ACM, GDSC, Club inductions & core roles",
+                            emoji = "👥",
+                            accentColor = BrandIndigo,
+                            actionLabel = "Explore",
+                            quickTags = listOf("ACM", "GDSC"),
+                            testTag = "btn_shortcut_clubs",
+                            onClick = {
+                                viewModel.setOppSearchQuery("")
+                                viewModel.setExploreSubTab(ExploreSubTab.CLUBS)
+                                viewModel.setTab(AppTab.EXPLORE)
+                            },
+                            onTagClick = { tag ->
+                                viewModel.setExploreSubTab(ExploreSubTab.CLUBS)
+                                viewModel.setOppSearchQuery(tag)
+                                viewModel.setTab(AppTab.EXPLORE)
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        )
+
+                        CampusOpportunityBar(
+                            title = "Volunteering",
+                            badgeText = "Activity Credits",
+                            liveStatusText = "5 Drives",
+                            description = "NSS, Aayam festival teams & campus outreach",
+                            emoji = "🤝",
+                            accentColor = BrandEmerald,
+                            actionLabel = "Volunteer",
+                            quickTags = listOf("NSS", "Aayam"),
+                            testTag = "btn_shortcut_volunteering",
+                            onClick = {
+                                viewModel.setOppSearchQuery("")
+                                viewModel.setExploreSubTab(ExploreSubTab.VOLUNTEERING)
+                                viewModel.setTab(AppTab.EXPLORE)
+                            },
+                            onTagClick = { tag ->
+                                viewModel.setExploreSubTab(ExploreSubTab.VOLUNTEERING)
+                                viewModel.setOppSearchQuery(tag)
+                                viewModel.setTab(AppTab.EXPLORE)
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        )
+                    }
+
+                    // Row 2: Find Teammates | Hackathons & Challenges
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Max),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        CampusOpportunityBar(
+                            title = "Find Teammates",
+                            badgeText = "Skill Matching",
+                            liveStatusText = "Instant",
+                            description = "Connect with SGSITS peers for hackathon squads",
+                            emoji = "🔍",
+                            accentColor = SkyBlueDark,
+                            actionLabel = "Connect",
+                            quickTags = listOf("AI / ML", "UI/UX"),
+                            testTag = "btn_shortcut_peers",
+                            onClick = {
+                                viewModel.setStudentSearchQuery("")
+                                viewModel.setExploreSubTab(ExploreSubTab.STUDENTS)
+                                viewModel.setTab(AppTab.EXPLORE)
+                            },
+                            onTagClick = { tag ->
+                                viewModel.setExploreSubTab(ExploreSubTab.STUDENTS)
+                                viewModel.setStudentSearchQuery(tag)
+                                viewModel.setTab(AppTab.EXPLORE)
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        )
+
+                        CampusOpportunityBar(
+                            title = "Hackathons",
+                            badgeText = "Live Contests",
+                            liveStatusText = "SIH 2026",
+                            description = "Smart India Hackathon, college techfests & coding",
+                            emoji = "🏆",
+                            accentColor = BrandAmber,
+                            actionLabel = "Compete",
+                            quickTags = listOf("SIH 2026", "TechFest"),
+                            testTag = "btn_shortcut_opportunities",
+                            onClick = {
+                                viewModel.setOppSearchQuery("")
+                                viewModel.setExploreSubTab(ExploreSubTab.HACKATHONS)
+                                viewModel.setTab(AppTab.EXPLORE)
+                            },
+                            onTagClick = { tag ->
+                                viewModel.setExploreSubTab(ExploreSubTab.HACKATHONS)
+                                viewModel.setOppSearchQuery(tag)
+                                viewModel.setTab(AppTab.EXPLORE)
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        )
+                    }
+
+                    // Row 3: My Teams & Workspaces | Research & Lab Projects
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Max),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        CampusOpportunityBar(
+                            title = "My Teams",
+                            badgeText = "Collaboration",
+                            liveStatusText = "Live Sync",
+                            description = "Manage joined squads, tasks, chat & milestones",
+                            emoji = "⚡",
+                            accentColor = BrandPurple,
+                            actionLabel = "Open",
+                            quickTags = listOf("Sprint", "Squad Chat"),
+                            testTag = "btn_shortcut_teams",
+                            onClick = {
+                                viewModel.setTab(AppTab.TEAMS)
+                            },
+                            onTagClick = { _ ->
+                                viewModel.setTab(AppTab.TEAMS)
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        )
+
+                        CampusOpportunityBar(
+                            title = "Research & Labs",
+                            badgeText = "Faculty Projects",
+                            liveStatusText = "Grants Open",
+                            description = "Join professor research groups, IoT labs & grants",
+                            emoji = "🔬",
+                            accentColor = Color(0xFF00897B),
+                            actionLabel = "Apply",
+                            quickTags = listOf("AI Lab", "IoT"),
+                            testTag = "btn_shortcut_research",
+                            onClick = {
+                                viewModel.setOppSearchQuery("")
+                                viewModel.setExploreSubTab(ExploreSubTab.RESEARCH)
+                                viewModel.setTab(AppTab.EXPLORE)
+                            },
+                            onTagClick = { tag ->
+                                viewModel.setExploreSubTab(ExploreSubTab.RESEARCH)
+                                viewModel.setOppSearchQuery(tag)
+                                viewModel.setTab(AppTab.EXPLORE)
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        )
+                    }
+                }
             }
         }
 
@@ -1051,3 +1132,248 @@ fun PanelNavigationCard(
         }
     }
 }
+
+@Composable
+fun CampusOpportunityBar(
+    title: String,
+    badgeText: String,
+    description: String,
+    emoji: String,
+    accentColor: Color,
+    testTag: String,
+    liveStatusText: String? = null,
+    quickTags: List<String> = emptyList(),
+    actionLabel: String = "Explore",
+    onClick: () -> Unit,
+    onTagClick: ((String) -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.975f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "barScale"
+    )
+
+    val shadowElevation by animateDpAsState(
+        targetValue = if (isPressed) 6.dp else 1.5.dp,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "barElevation"
+    )
+
+    val arrowOffset by animateDpAsState(
+        targetValue = if (isPressed) 4.dp else 0.dp,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "arrowOffset"
+    )
+
+    val infiniteTransition = rememberInfiniteTransition(label = "pulseTransition")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseAlpha"
+    )
+
+    Surface(
+        onClick = onClick,
+        interactionSource = interactionSource,
+        shape = RoundedCornerShape(16.dp),
+        color = if (isPressed) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f) else MaterialTheme.colorScheme.surface,
+        border = BorderStroke(
+            width = if (isPressed) 1.5.dp else 1.dp,
+            color = if (isPressed) accentColor else accentColor.copy(alpha = 0.32f)
+        ),
+        shadowElevation = shadowElevation,
+        modifier = modifier
+            .fillMaxWidth()
+            .scale(scale)
+            .testTag(testTag)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(11.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                // Top Row: Leading Emoji Container + Live Pulsing Activity Beacon
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = accentColor.copy(alpha = if (isPressed) 0.22f else 0.12f),
+                        border = BorderStroke(1.dp, accentColor.copy(alpha = if (isPressed) 0.45f else 0.25f)),
+                        modifier = Modifier.size(38.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = emoji,
+                                fontSize = 20.sp
+                            )
+                        }
+                    }
+
+                    if (liveStatusText != null) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(accentColor.copy(alpha = 0.12f))
+                                .padding(horizontal = 5.dp, vertical = 2.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(5.dp)
+                                    .clip(CircleShape)
+                                    .background(accentColor.copy(alpha = pulseAlpha))
+                            )
+                            Text(
+                                text = liveStatusText,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = accentColor,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(7.dp))
+
+                // Badge Tag
+                Surface(
+                    shape = RoundedCornerShape(5.dp),
+                    color = accentColor.copy(alpha = 0.14f)
+                ) {
+                    Text(
+                        text = badgeText,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = accentColor,
+                        fontSize = 9.5.sp,
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.5.dp),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Title
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 13.5.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(3.dp))
+
+                // Description
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 10.5.sp,
+                    lineHeight = 14.5.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                // Quick Tags (clickable pills)
+                if (quickTags.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        quickTags.take(2).forEach { tag ->
+                            Surface(
+                                onClick = {
+                                    if (onTagClick != null) {
+                                        onTagClick(tag)
+                                    } else {
+                                        onClick()
+                                    }
+                                },
+                                shape = RoundedCornerShape(5.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                                border = BorderStroke(0.6.dp, accentColor.copy(alpha = 0.28f))
+                            ) {
+                                Text(
+                                    text = "#$tag",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 9.5.sp,
+                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Column {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Dynamic Action CTA Button with animated arrow nudge
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (isPressed) accentColor else accentColor.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, accentColor.copy(alpha = if (isPressed) 0.5f else 0.28f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(29.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(horizontal = 6.dp)
+                    ) {
+                        Text(
+                            text = actionLabel,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isPressed) Color.White else accentColor,
+                            fontSize = 11.sp
+                        )
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Icon(
+                            imageVector = Icons.Default.ArrowForward,
+                            contentDescription = "Open $title",
+                            tint = if (isPressed) Color.White else accentColor,
+                            modifier = Modifier
+                                .size(12.dp)
+                                .offset(x = arrowOffset)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+

@@ -1156,8 +1156,15 @@ fun ProfileScreen(
                     item {
                         OutlinedTextField(
                             value = editCollege,
-                            onValueChange = { editCollege = it },
+                            onValueChange = { /* Fixed to SGSITS Indore during campus phase */ },
+                            readOnly = true,
                             label = { Text("College / University *") },
+                            supportingText = {
+                                Text("Campus Phase: Exclusively active for SGSITS Indore")
+                            },
+                            trailingIcon = {
+                                Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
+                            },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }

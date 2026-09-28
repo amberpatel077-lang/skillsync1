@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -9,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
@@ -27,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.example.model.*
 import com.example.ui.components.*
 import com.example.ui.theme.*
+import com.example.viewmodel.AppTab
 import com.example.viewmodel.ExploreSubTab
 import com.example.viewmodel.SkillSyncViewModel
 
@@ -47,6 +50,11 @@ fun ExploreScreen(
     var clubOppToApply by remember { mutableStateOf<Opportunity?>(null) }
     var volOppToRegister by remember { mutableStateOf<Opportunity?>(null) }
 
+    // Intercept back gesture to return to Home screen
+    BackHandler {
+        viewModel.setTab(AppTab.HOME)
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -55,86 +63,140 @@ fun ExploreScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Top App Bar Tabs: All Opportunities vs Club Recruitment vs Volunteering vs Student Discovery
+            // Dedicated Top Header with Back Button to return to Home
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 3.dp,
+                border = androidx.compose.foundation.BorderStroke(
+                    0.5.dp,
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = { viewModel.setTab(AppTab.HOME) },
+                        modifier = Modifier.testTag("btn_explore_back")
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back to Home",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 4.dp)
+                    ) {
+                        val headerInfo = when (uiState.exploreSubTab) {
+                            ExploreSubTab.CLUBS -> Triple("Clubs & Chapters", "SGSITS Inductions & Core Teams", "👥")
+                            ExploreSubTab.VOLUNTEERING -> Triple("Campus Volunteering", "NSS, Aayam & Activity Credits", "🤝")
+                            ExploreSubTab.STUDENTS -> Triple("Find Teammates", "Skill-Based Peer Discovery", "🔍")
+                            ExploreSubTab.HACKATHONS -> Triple("Hackathons & Challenges", "Live Tech Contests & SIH 2026", "🏆")
+                            ExploreSubTab.RESEARCH -> Triple("Research & Labs", "Faculty Projects & Core IoT Labs", "🔬")
+                            ExploreSubTab.OPPORTUNITIES -> Triple("Campus Opportunities", "All SGSITS Hub Opportunities", "🌐")
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = headerInfo.third,
+                                fontSize = 16.sp
+                            )
+                            Text(
+                                text = headerInfo.first,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        Text(
+                            text = headerInfo.second,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    // Reset search button if query is typed
+                    if (uiState.oppSearchQuery.isNotBlank() || uiState.studentSearchQuery.isNotBlank()) {
+                        TextButton(
+                            onClick = {
+                                viewModel.setOppSearchQuery("")
+                                viewModel.setStudentSearchQuery("")
+                            },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text("Clear", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+
+            // Top Category Tabs Row for Explore Sub-Categories
+            val allSubTabs = listOf(
+                ExploreSubTab.CLUBS,
+                ExploreSubTab.VOLUNTEERING,
+                ExploreSubTab.STUDENTS,
+                ExploreSubTab.HACKATHONS,
+                ExploreSubTab.RESEARCH,
+                ExploreSubTab.OPPORTUNITIES
+            )
+            val selectedTabIndex = allSubTabs.indexOf(uiState.exploreSubTab).coerceAtLeast(0)
+
             ScrollableTabRow(
-                selectedTabIndex = when (uiState.exploreSubTab) {
-                    ExploreSubTab.OPPORTUNITIES -> 0
-                    ExploreSubTab.CLUBS -> 1
-                    ExploreSubTab.VOLUNTEERING -> 2
-                    ExploreSubTab.STUDENTS -> 3
-                },
+                selectedTabIndex = selectedTabIndex,
                 containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = SkyBluePrimary,
                 edgePadding = 12.dp
             ) {
-                Tab(
-                    selected = uiState.exploreSubTab == ExploreSubTab.OPPORTUNITIES,
-                    onClick = { viewModel.setExploreSubTab(ExploreSubTab.OPPORTUNITIES) },
-                    text = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(imageVector = Icons.Default.Hub, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Text("All Opportunities", fontWeight = FontWeight.Bold)
-                        }
-                    },
-                    modifier = Modifier.testTag("tab_opportunity_hub")
-                )
-                Tab(
-                    selected = uiState.exploreSubTab == ExploreSubTab.CLUBS,
-                    onClick = { viewModel.setExploreSubTab(ExploreSubTab.CLUBS) },
-                    text = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text("👥", fontSize = 14.sp)
-                            Text("Club Recruitment", fontWeight = FontWeight.Bold)
-                        }
-                    },
-                    modifier = Modifier.testTag("tab_club_recruitment")
-                )
-                Tab(
-                    selected = uiState.exploreSubTab == ExploreSubTab.VOLUNTEERING,
-                    onClick = { viewModel.setExploreSubTab(ExploreSubTab.VOLUNTEERING) },
-                    text = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text("🤝", fontSize = 14.sp)
-                            Text("Volunteering Drives", fontWeight = FontWeight.Bold)
-                        }
-                    },
-                    modifier = Modifier.testTag("tab_volunteering_drives")
-                )
-                Tab(
-                    selected = uiState.exploreSubTab == ExploreSubTab.STUDENTS,
-                    onClick = { viewModel.setExploreSubTab(ExploreSubTab.STUDENTS) },
-                    text = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(imageVector = Icons.Default.PersonSearch, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Text("Student Discovery", fontWeight = FontWeight.Bold)
-                        }
-                    },
-                    modifier = Modifier.testTag("tab_student_discovery")
-                )
+                allSubTabs.forEach { subTab ->
+                    val isSelected = uiState.exploreSubTab == subTab
+                    Tab(
+                        selected = isSelected,
+                        onClick = { viewModel.setExploreSubTab(subTab) },
+                        text = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    when (subTab) {
+                                        ExploreSubTab.CLUBS -> "👥"
+                                        ExploreSubTab.VOLUNTEERING -> "🤝"
+                                        ExploreSubTab.STUDENTS -> "🔍"
+                                        ExploreSubTab.HACKATHONS -> "🏆"
+                                        ExploreSubTab.RESEARCH -> "🔬"
+                                        ExploreSubTab.OPPORTUNITIES -> "🌐"
+                                    },
+                                    fontSize = 14.sp
+                                )
+                                Text(
+                                    subTab.title,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                )
+                            }
+                        },
+                        modifier = Modifier.testTag("tab_${subTab.name.lowercase()}")
+                    )
+                }
             }
 
             when (uiState.exploreSubTab) {
-                ExploreSubTab.OPPORTUNITIES -> {
-                    // OPPORTUNITY HUB VIEW
-                    OpportunityHubView(
-                        viewModel = viewModel,
-                        filteredOpps = filteredOpps,
-                        currentStudent = currentStudent,
-                        uiState = uiState
-                    )
-                }
                 ExploreSubTab.CLUBS -> {
                     // CLUB RECRUITMENT VIEW
                     ClubRecruitmentView(
@@ -165,11 +227,20 @@ fun ExploreScreen(
                         }
                     )
                 }
+                ExploreSubTab.HACKATHONS, ExploreSubTab.RESEARCH, ExploreSubTab.OPPORTUNITIES -> {
+                    // OPPORTUNITY HUB VIEW (Hackathons, Research, or All Opportunities)
+                    OpportunityHubView(
+                        viewModel = viewModel,
+                        filteredOpps = filteredOpps,
+                        currentStudent = currentStudent,
+                        uiState = uiState
+                    )
+                }
             }
         }
 
         // Floating Action Button to post an opportunity
-        if (uiState.exploreSubTab == ExploreSubTab.OPPORTUNITIES) {
+        if (uiState.exploreSubTab == ExploreSubTab.OPPORTUNITIES || uiState.exploreSubTab == ExploreSubTab.HACKATHONS || uiState.exploreSubTab == ExploreSubTab.RESEARCH) {
             ExtendedFloatingActionButton(
                 onClick = { showPostOppDialog = true },
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },

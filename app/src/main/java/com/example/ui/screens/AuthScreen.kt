@@ -120,18 +120,14 @@ fun AuthScreen(
         "Data Science", "SQL", "Presentation"
     )
 
-    // Popular colleges
-    val popularColleges = listOf(
-        "SGSITS Indore", "IIT Bombay", "BITS Pilani", "NIT Trichy", "Delhi University"
-    )
-
-    // Branches
+    // Branches (SGSITS Departments)
     val popularBranches = listOf(
         "Computer Science & Engineering",
         "Information Technology",
         "Electronics & Comm.",
+        "Electrical Engineering",
         "AI & Data Science",
-        "Design & Media"
+        "Mechanical Engineering"
     )
 
     // Academic Years
@@ -783,10 +779,38 @@ fun AuthScreen(
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "Join your college innovation network & find dream team members",
+                                    text = "Join SGSITS Indore innovation network & find dream team members",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+                            }
+
+                            // SGSITS Campus Exclusive Banner
+                            Surface(
+                                color = BrandCyan.copy(alpha = 0.12f),
+                                shape = RoundedCornerShape(10.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, BrandCyan.copy(alpha = 0.3f))
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Verified,
+                                        contentDescription = null,
+                                        tint = BrandCyan,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Text(
+                                        text = "Campus Exclusive: Registrations are currently restricted to SGSITS Indore students.",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = BrandCyan,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
                             }
 
                             // Profile Photo Selector
@@ -898,8 +922,8 @@ fun AuthScreen(
                                         signUpEmail = it
                                         viewModel.clearAuthError()
                                     },
-                                    label = { Text("College Email Address *") },
-                                    placeholder = { Text("e.g. vikram@sgsits.ac.in or .edu") },
+                                    label = { Text("SGSITS Student Email Address *") },
+                                    placeholder = { Text("e.g. vikram@sgsits.ac.in or student email") },
                                     leadingIcon = {
                                         Icon(Icons.Default.School, contentDescription = null, tint = BrandCyan)
                                     },
@@ -912,7 +936,7 @@ fun AuthScreen(
                                 )
 
                                 val isVerifiedEmail = signUpEmail.endsWith(".edu") || signUpEmail.endsWith(".ac.in") ||
-                                        signUpEmail.contains("college") || signUpEmail.contains("univ")
+                                        signUpEmail.contains("sgsits") || signUpEmail.contains("college") || signUpEmail.contains("univ")
                                 if (isVerifiedEmail) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
@@ -921,7 +945,7 @@ fun AuthScreen(
                                     ) {
                                         Icon(Icons.Default.Verified, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(14.dp))
                                         Text(
-                                            text = "Verified student domain detected!",
+                                            text = if (signUpEmail.contains("sgsits")) "Verified SGSITS student domain detected!" else "Verified student domain detected!",
                                             style = MaterialTheme.typography.labelSmall,
                                             color = SuccessGreen,
                                             fontWeight = FontWeight.SemiBold
@@ -958,31 +982,56 @@ fun AuthScreen(
                                 singleLine = true
                             )
 
-                            // College / University
-                            OutlinedTextField(
-                                value = signUpCollege,
-                                onValueChange = { signUpCollege = it },
-                                label = { Text("College / University *") },
-                                placeholder = { Text("Enter college name") },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Apartment, contentDescription = null, tint = BrandCyan)
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag("input_signup_college"),
-                                shape = RoundedCornerShape(12.dp),
-                                singleLine = true
-                            )
-
-                            // Popular Colleges Quick Selector
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                items(popularColleges) { col ->
-                                    FilterChip(
-                                        selected = signUpCollege == col,
-                                        onClick = { signUpCollege = col },
-                                        label = { Text(col, fontSize = 11.sp) }
-                                    )
-                                }
+                            // College / University (Locked to SGSITS Indore for now)
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                OutlinedTextField(
+                                    value = signUpCollege,
+                                    onValueChange = { /* Fixed to SGSITS Indore for current phase */ },
+                                    readOnly = true,
+                                    enabled = true,
+                                    label = { Text("College / University *") },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Apartment, contentDescription = null, tint = BrandCyan)
+                                    },
+                                    trailingIcon = {
+                                        Surface(
+                                            color = BrandCyan.copy(alpha = 0.15f),
+                                            shape = RoundedCornerShape(8.dp),
+                                            modifier = Modifier.padding(end = 8.dp)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.Lock,
+                                                    contentDescription = null,
+                                                    tint = BrandCyan,
+                                                    modifier = Modifier.size(12.dp)
+                                                )
+                                                Text(
+                                                    "SGSITS Only",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = BrandCyan,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+                                    },
+                                    supportingText = {
+                                        Text(
+                                            "Shri Govindram Seksaria Institute of Technology and Science, Indore (Campus Launch Exclusive)",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("input_signup_college"),
+                                    shape = RoundedCornerShape(12.dp),
+                                    singleLine = true
+                                )
                             }
 
                             // Branch / Department

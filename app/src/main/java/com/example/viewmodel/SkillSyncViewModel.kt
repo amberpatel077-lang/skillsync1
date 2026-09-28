@@ -44,9 +44,11 @@ enum class AppTab(val title: String) {
 
 enum class ExploreSubTab(val title: String) {
     OPPORTUNITIES("Opportunities"),
-    CLUBS("Club Recruitment"),
+    CLUBS("Clubs & Chapters"),
     VOLUNTEERING("Volunteering"),
-    STUDENTS("Student Discovery")
+    STUDENTS("Student Discovery"),
+    HACKATHONS("Hackathons"),
+    RESEARCH("Research & Labs")
 }
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
@@ -182,6 +184,8 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 val matchesSubTab = when (state.exploreSubTab) {
                     ExploreSubTab.CLUBS -> opp.category == OpportunityCategory.CLUB
                     ExploreSubTab.VOLUNTEERING -> opp.category == OpportunityCategory.VOLUNTEERING
+                    ExploreSubTab.HACKATHONS -> opp.category == OpportunityCategory.HACKATHON || opp.category == OpportunityCategory.COMPETITION
+                    ExploreSubTab.RESEARCH -> opp.category == OpportunityCategory.RESEARCH || opp.category == OpportunityCategory.PROJECT
                     else -> true
                 }
 

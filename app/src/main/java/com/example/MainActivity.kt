@@ -56,7 +56,6 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 val bottomNavTabs = listOf(
                                     AppTab.HOME,
-                                    AppTab.EXPLORE,
                                     AppTab.TEAMS,
                                     AppTab.PROFILE
                                 )

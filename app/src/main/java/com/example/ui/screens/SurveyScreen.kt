@@ -160,6 +160,21 @@ fun SurveyScreen(
                             modifier = Modifier.weight(1f)
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedButton(
+                        onClick = { viewModel.openSurveyForm() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("btn_survey_screen_fill_form"),
+                        shape = RoundedCornerShape(10.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, SkyBluePrimary)
+                    ) {
+                        Text("📋", fontSize = 14.sp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Submit Your Survey Response (Google Form)", color = SkyBluePrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
                 }
             }
         }

@@ -29,7 +29,10 @@ data class UiState(
     val studentBranchFilter: String? = null,
     val studentSkillFilter: String? = null,
     val isDarkTheme: Boolean = false,
-    val userMessage: String? = null
+    val userMessage: String? = null,
+    val isSurveyFormOpen: Boolean = false,
+    val selectedClubForApplication: Opportunity? = null,
+    val selectedVolunteerForRegistration: Opportunity? = null
 )
 
 enum class AppTab(val title: String) {
@@ -41,7 +44,9 @@ enum class AppTab(val title: String) {
 }
 
 enum class ExploreSubTab(val title: String) {
-    OPPORTUNITIES("Opportunity Hub"),
+    OPPORTUNITIES("Opportunities"),
+    CLUBS("Club Recruitment"),
+    VOLUNTEERING("Volunteering"),
     STUDENTS("Student Discovery")
 }
 
@@ -129,10 +134,58 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
         if (teamId.isNotBlank()) repository.getTeamResources(teamId) else flowOf(emptyList())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Club Applications Tracking
+    private val _clubApplications = MutableStateFlow<List<ClubApplication>>(
+        listOf(
+            ClubApplication(
+                id = "app_acm_amber",
+                clubOpportunityId = "opp_acm_recruit",
+                clubName = "ACM SGSITS Student Chapter",
+                studentId = "student_amber",
+                studentName = "Amber Patel",
+                roleApplied = "Technical Associate & Web Lead",
+                sop = "Passionate about full-stack web and CP contests. Built CampusHub and want to scale ACM digital portal.",
+                portfolioUrl = "https://github.com/amber-patel",
+                status = ApplicationStatus.UNDER_REVIEW,
+                timestamp = System.currentTimeMillis() - 86400000L
+            )
+        )
+    )
+    val clubApplications: StateFlow<List<ClubApplication>> = _clubApplications.asStateFlow()
+
+    // Volunteer Registrations Tracking
+    private val _volunteerRegistrations = MutableStateFlow<List<VolunteerRegistration>>(
+        listOf(
+            VolunteerRegistration(
+                id = "vol_aayam_amber",
+                volunteerOpportunityId = "opp_aayam_volunteers",
+                eventTitle = "Aayam 2026 Cultural Fest Volunteer Taskforce",
+                studentId = "student_amber",
+                studentName = "Amber Patel",
+                preferredRole = "Technical Sound & Lighting Logistics",
+                hoursAvailable = "18 Hours",
+                motivation = "Experienced in auditorium acoustics and stage management. Committed to making Aayam 2026 huge.",
+                status = ApplicationStatus.ACCEPTED,
+                timestamp = System.currentTimeMillis() - 172800000L
+            )
+        )
+    )
+    val volunteerRegistrations: StateFlow<List<VolunteerRegistration>> = _volunteerRegistrations.asStateFlow()
+
+    // Survey Submissions (In-app Google Form responses)
+    private val _surveySubmissions = MutableStateFlow<List<SurveySubmission>>(emptyList())
+    val surveySubmissions: StateFlow<List<SurveySubmission>> = _surveySubmissions.asStateFlow()
+
     // Filtered Opportunities
     val filteredOpportunities: StateFlow<List<Pair<Opportunity, Int>>> =
         combine(opportunities, currentStudent, _uiState) { opps, student, state ->
             opps.filter { opp ->
+                val matchesSubTab = when (state.exploreSubTab) {
+                    ExploreSubTab.CLUBS -> opp.category == OpportunityCategory.CLUB
+                    ExploreSubTab.VOLUNTEERING -> opp.category == OpportunityCategory.VOLUNTEERING
+                    else -> true
+                }
+
                 val matchesQuery = state.oppSearchQuery.isBlank() ||
                         opp.title.contains(state.oppSearchQuery, ignoreCase = true) ||
                         opp.organizer.contains(state.oppSearchQuery, ignoreCase = true) ||
@@ -144,7 +197,7 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 }
                 val matchesMode = state.selectedModeFilter == null || opp.mode == state.selectedModeFilter
 
-                matchesQuery && matchesCat && matchesSkill && matchesMode
+                matchesSubTab && matchesQuery && matchesCat && matchesSkill && matchesMode
             }.map { opp ->
                 val matchScore = if (student != null) {
                     SmartMatchingEngine.calculateOpportunityFit(student, opp)
@@ -728,5 +781,123 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun clearAuthError() {
         _uiState.update { it.copy(authError = null) }
+    }
+
+    fun openSurveyForm() {
+        _uiState.update { it.copy(isSurveyFormOpen = true) }
+    }
+
+    fun closeSurveyForm() {
+        _uiState.update { it.copy(isSurveyFormOpen = false) }
+    }
+
+    fun openClubApplication(opp: Opportunity) {
+        _uiState.update { it.copy(selectedClubForApplication = opp) }
+    }
+
+    fun closeClubApplication() {
+        _uiState.update { it.copy(selectedClubForApplication = null) }
+    }
+
+    fun openVolunteerRegistration(opp: Opportunity) {
+        _uiState.update { it.copy(selectedVolunteerForRegistration = opp) }
+    }
+
+    fun closeVolunteerRegistration() {
+        _uiState.update { it.copy(selectedVolunteerForRegistration = null) }
+    }
+
+    fun applyToClub(
+        opp: Opportunity,
+        roleApplied: String,
+        sop: String,
+        portfolioUrl: String
+    ) {
+        val student = currentStudent.value ?: return
+        val newApp = ClubApplication(
+            id = "club_app_${UUID.randomUUID().toString().take(8)}",
+            clubOpportunityId = opp.id,
+            clubName = opp.organizer,
+            studentId = student.id,
+            studentName = student.name,
+            roleApplied = roleApplied,
+            sop = sop,
+            portfolioUrl = portfolioUrl,
+            status = ApplicationStatus.SUBMITTED,
+            timestamp = System.currentTimeMillis()
+        )
+        _clubApplications.update { listOf(newApp) + it }
+        _uiState.update {
+            it.copy(
+                selectedClubForApplication = null,
+                userMessage = "Application submitted to ${opp.organizer} for $roleApplied! 📋"
+            )
+        }
+    }
+
+    fun registerForVolunteering(
+        opp: Opportunity,
+        preferredRole: String,
+        hoursAvailable: String,
+        motivation: String
+    ) {
+        val student = currentStudent.value ?: return
+        val newVol = VolunteerRegistration(
+            id = "vol_reg_${UUID.randomUUID().toString().take(8)}",
+            volunteerOpportunityId = opp.id,
+            eventTitle = opp.title,
+            studentId = student.id,
+            studentName = student.name,
+            preferredRole = preferredRole,
+            hoursAvailable = hoursAvailable,
+            motivation = motivation,
+            status = ApplicationStatus.ACCEPTED,
+            timestamp = System.currentTimeMillis()
+        )
+        _volunteerRegistrations.update { listOf(newVol) + it }
+        _uiState.update {
+            it.copy(
+                selectedVolunteerForRegistration = null,
+                userMessage = "Successfully registered for ${opp.title} as $preferredRole! 🤝"
+            )
+        }
+    }
+
+    fun submitGoogleFormSurvey(
+        missedOppDueToNoTeam: Boolean,
+        difficultyRating: Int,
+        channelsUsed: List<String>,
+        obstaclesFaced: List<String>,
+        opportunitiesWanted: List<String>,
+        clubsWanted: List<String>,
+        volunteeringInterests: List<String>,
+        wantsMentorship: Boolean,
+        feedback: String
+    ) {
+        val student = currentStudent.value ?: return
+        val submission = SurveySubmission(
+            id = "survey_${UUID.randomUUID().toString().take(8)}",
+            studentId = student.id,
+            studentName = student.name,
+            branch = student.branch,
+            year = student.year,
+            missedOppDueToNoTeam = missedOppDueToNoTeam,
+            difficultyRating = difficultyRating,
+            channelsUsed = channelsUsed,
+            obstaclesFaced = obstaclesFaced,
+            opportunitiesWanted = opportunitiesWanted,
+            clubsWanted = clubsWanted,
+            volunteeringInterests = volunteeringInterests,
+            wantsMentorship = wantsMentorship,
+            feedback = feedback,
+            timestamp = System.currentTimeMillis()
+        )
+        _surveySubmissions.update { listOf(submission) + it }
+        _uiState.update {
+            it.copy(
+                isSurveyFormOpen = false,
+                userMessage = "Survey submitted successfully! Your campus voice has been recorded. 🌟"
+            )
+        }
     }
 }

@@ -39,6 +39,8 @@ fun OpportunityDetailDialog(
 
     var showCreateTeamDialog by remember { mutableStateOf(false) }
     var teamNameInput by remember { mutableStateOf("Team ${currentStudent?.name?.split(" ")?.firstOrNull() ?: "Alpha"}'s ${opp.title.take(12)}") }
+    var showClubAppDialog by remember { mutableStateOf(false) }
+    var showVolunteerRegDialog by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -222,38 +224,86 @@ fun OpportunityDetailDialog(
                 }
             }
 
-            // Bottom Action Bar: Find Teammates (Primary Star) and Form Team
-            Row(
+            // Bottom Action Bar: Adaptive based on category
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    .padding(vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Button(
-                    onClick = {
-                        val targetId = opp.id
-                        onDismiss()
-                        viewModel.openFindTeammates(targetId)
-                    },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White),
-                    shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(vertical = 12.dp)
-                ) {
-                    Icon(Icons.Default.PersonSearch, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Find Teammates ⭐", fontWeight = FontWeight.Bold)
+                if (opp.category == OpportunityCategory.CLUB) {
+                    Button(
+                        onClick = { showClubAppDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(vertical = 12.dp)
+                    ) {
+                        Text("👥", fontSize = 16.sp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Apply to Club Recruitment 🚀", fontWeight = FontWeight.Bold)
+                    }
+                } else if (opp.category == OpportunityCategory.VOLUNTEERING) {
+                    Button(
+                        onClick = { showVolunteerRegDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandEmerald, contentColor = Color.White),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(vertical = 12.dp)
+                    ) {
+                        Text("🤝", fontSize = 16.sp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Register as Campus Volunteer 🌟", fontWeight = FontWeight.Bold)
+                    }
                 }
 
-                OutlinedButton(
-                    onClick = { showCreateTeamDialog = true },
-                    shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text("Form Team")
+                    Button(
+                        onClick = {
+                            val targetId = opp.id
+                            onDismiss()
+                            viewModel.openFindTeammates(targetId)
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = if (opp.category == OpportunityCategory.CLUB || opp.category == OpportunityCategory.VOLUNTEERING)
+                            ButtonDefaults.outlinedButtonColors() else ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(vertical = 12.dp)
+                    ) {
+                        Icon(Icons.Default.PersonSearch, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Find Teammates ⭐", fontWeight = FontWeight.Bold)
+                    }
+
+                    OutlinedButton(
+                        onClick = { showCreateTeamDialog = true },
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)
+                    ) {
+                        Text("Form Team")
+                    }
                 }
             }
         }
+    }
+
+    if (showClubAppDialog) {
+        com.example.ui.components.ClubApplicationDialog(
+            opportunity = opp,
+            viewModel = viewModel,
+            onDismiss = { showClubAppDialog = false }
+        )
+    }
+
+    if (showVolunteerRegDialog) {
+        com.example.ui.components.VolunteerRegistrationDialog(
+            opportunity = opp,
+            viewModel = viewModel,
+            onDismiss = { showVolunteerRegDialog = false }
+        )
     }
 
     if (showCreateTeamDialog) {

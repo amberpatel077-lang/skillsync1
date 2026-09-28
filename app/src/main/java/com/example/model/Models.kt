@@ -77,7 +77,9 @@ data class StudentProfile(
     val bio: String = "",
     val projects: List<ProjectExperience> = emptyList(),
     val isPublic: Boolean = true,
-    val avatarPhotoUri: String? = null
+    val avatarPhotoUri: String? = null,
+    val volunteerHours: Int = 18,
+    val volunteerBadges: List<String> = listOf("NSS Green Champion", "Aayam Fest Crew")
 )
 
 enum class OpportunityCategory(val displayName: String, val iconEmoji: String) {
@@ -226,5 +228,49 @@ data class StudentQuote(
     val quote: String,
     val category: String,
     val appSolution: String
+)
+
+data class ClubApplication(
+    val id: String,
+    val clubOpportunityId: String,
+    val clubName: String,
+    val studentId: String,
+    val studentName: String,
+    val roleApplied: String,
+    val sop: String,
+    val portfolioUrl: String = "",
+    val status: ApplicationStatus = ApplicationStatus.SUBMITTED,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+data class VolunteerRegistration(
+    val id: String,
+    val volunteerOpportunityId: String,
+    val eventTitle: String,
+    val studentId: String,
+    val studentName: String,
+    val preferredRole: String,
+    val hoursAvailable: String = "10 Hours",
+    val motivation: String = "",
+    val status: ApplicationStatus = ApplicationStatus.ACCEPTED,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+data class SurveySubmission(
+    val id: String,
+    val studentId: String,
+    val studentName: String,
+    val branch: String,
+    val year: String,
+    val missedOppDueToNoTeam: Boolean,
+    val difficultyRating: Int, // 1 to 5
+    val channelsUsed: List<String>,
+    val obstaclesFaced: List<String>,
+    val opportunitiesWanted: List<String>,
+    val clubsWanted: List<String>,
+    val volunteeringInterests: List<String>,
+    val wantsMentorship: Boolean,
+    val feedback: String,
+    val timestamp: Long = System.currentTimeMillis()
 )
 

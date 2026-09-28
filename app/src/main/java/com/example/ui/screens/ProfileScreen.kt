@@ -32,6 +32,7 @@ import coil.compose.AsyncImage
 import com.example.model.*
 import com.example.ui.components.*
 import com.example.ui.theme.*
+import com.example.viewmodel.AppTab
 import com.example.viewmodel.SkillSyncViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -542,6 +543,128 @@ fun ProfileScreen(
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        // Section: Volunteering & Civic Impact
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(14.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, BrandEmerald.copy(alpha = 0.35f))
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = BrandEmerald.copy(alpha = 0.15f),
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text("🤝", fontSize = 16.sp)
+                                }
+                            }
+                            Column {
+                                Text(
+                                    text = "Campus Volunteering & Social Impact",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "${student.volunteerHours} Verified Activity Hours Logged",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = BrandEmerald,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+
+                        TextButton(onClick = {
+                            viewModel.setTab(AppTab.EXPLORE)
+                            viewModel.setExploreSubTab(com.example.viewmodel.ExploreSubTab.VOLUNTEERING)
+                        }) {
+                            Text("Drives →", fontSize = 12.sp, color = BrandEmerald, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    // Badges
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        items(student.volunteerBadges) { badge ->
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = BrandEmerald.copy(alpha = 0.1f),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, BrandEmerald.copy(alpha = 0.3f))
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(Icons.Default.Verified, contentDescription = null, tint = BrandEmerald, modifier = Modifier.size(12.dp))
+                                    Text(badge, style = MaterialTheme.typography.labelSmall, color = BrandEmerald, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Section: Campus Voice & Survey Response
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                shape = RoundedCornerShape(14.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, BrandPurple.copy(alpha = 0.4f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = BrandPurple.copy(alpha = 0.15f),
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("📋", fontSize = 18.sp)
+                        }
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Campus Voice Survey Form",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Update your survey responses on student skills, team formation, clubs & volunteering.",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Button(
+                        onClick = { viewModel.openSurveyForm() },
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandPurple, contentColor = Color.White),
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Text("Fill Form", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

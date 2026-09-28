@@ -44,6 +44,8 @@ fun ExploreScreen(
     var inviteCandidateDialog by remember { mutableStateOf<StudentProfile?>(null) }
     var inviteNoteText by remember { mutableStateOf("") }
     var showPostOppDialog by remember { mutableStateOf(false) }
+    var clubOppToApply by remember { mutableStateOf<Opportunity?>(null) }
+    var volOppToRegister by remember { mutableStateOf<Opportunity?>(null) }
 
     Box(
         modifier = modifier
@@ -53,11 +55,17 @@ fun ExploreScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Top App Bar Tabs: Opportunities Hub vs Student Discovery
-            PrimaryTabRow(
-                selectedTabIndex = if (uiState.exploreSubTab == ExploreSubTab.OPPORTUNITIES) 0 else 1,
+            // Top App Bar Tabs: All Opportunities vs Club Recruitment vs Volunteering vs Student Discovery
+            ScrollableTabRow(
+                selectedTabIndex = when (uiState.exploreSubTab) {
+                    ExploreSubTab.OPPORTUNITIES -> 0
+                    ExploreSubTab.CLUBS -> 1
+                    ExploreSubTab.VOLUNTEERING -> 2
+                    ExploreSubTab.STUDENTS -> 3
+                },
                 containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = SkyBluePrimary
+                contentColor = SkyBluePrimary,
+                edgePadding = 12.dp
             ) {
                 Tab(
                     selected = uiState.exploreSubTab == ExploreSubTab.OPPORTUNITIES,
@@ -68,10 +76,38 @@ fun ExploreScreen(
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Icon(imageVector = Icons.Default.Hub, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Text("Opportunity Hub", fontWeight = FontWeight.Bold)
+                            Text("All Opportunities", fontWeight = FontWeight.Bold)
                         }
                     },
                     modifier = Modifier.testTag("tab_opportunity_hub")
+                )
+                Tab(
+                    selected = uiState.exploreSubTab == ExploreSubTab.CLUBS,
+                    onClick = { viewModel.setExploreSubTab(ExploreSubTab.CLUBS) },
+                    text = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text("👥", fontSize = 14.sp)
+                            Text("Club Recruitment", fontWeight = FontWeight.Bold)
+                        }
+                    },
+                    modifier = Modifier.testTag("tab_club_recruitment")
+                )
+                Tab(
+                    selected = uiState.exploreSubTab == ExploreSubTab.VOLUNTEERING,
+                    onClick = { viewModel.setExploreSubTab(ExploreSubTab.VOLUNTEERING) },
+                    text = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text("🤝", fontSize = 14.sp)
+                            Text("Volunteering Drives", fontWeight = FontWeight.Bold)
+                        }
+                    },
+                    modifier = Modifier.testTag("tab_volunteering_drives")
                 )
                 Tab(
                     selected = uiState.exploreSubTab == ExploreSubTab.STUDENTS,
@@ -89,25 +125,46 @@ fun ExploreScreen(
                 )
             }
 
-            if (uiState.exploreSubTab == ExploreSubTab.OPPORTUNITIES) {
-                // OPPORTUNITY HUB VIEW
-                OpportunityHubView(
-                    viewModel = viewModel,
-                    filteredOpps = filteredOpps,
-                    currentStudent = currentStudent,
-                    uiState = uiState
-                )
-            } else {
-                // STUDENT DISCOVERY VIEW
-                StudentDiscoveryView(
-                    viewModel = viewModel,
-                    discoveredStudents = discoveredStudents,
-                    uiState = uiState,
-                    onInviteStudent = { student ->
-                        inviteCandidateDialog = student
-                        inviteNoteText = "Hey ${student.name}! We saw your impressive skills in ${student.skills.take(2).joinToString(", ") { it.name }}. Would you like to team up for our upcoming project/hackathon?"
-                    }
-                )
+            when (uiState.exploreSubTab) {
+                ExploreSubTab.OPPORTUNITIES -> {
+                    // OPPORTUNITY HUB VIEW
+                    OpportunityHubView(
+                        viewModel = viewModel,
+                        filteredOpps = filteredOpps,
+                        currentStudent = currentStudent,
+                        uiState = uiState
+                    )
+                }
+                ExploreSubTab.CLUBS -> {
+                    // CLUB RECRUITMENT VIEW
+                    ClubRecruitmentView(
+                        viewModel = viewModel,
+                        filteredOpps = filteredOpps,
+                        currentStudent = currentStudent,
+                        onApplyClub = { clubOppToApply = it }
+                    )
+                }
+                ExploreSubTab.VOLUNTEERING -> {
+                    // VOLUNTEERING DRIVES VIEW
+                    VolunteeringDrivesView(
+                        viewModel = viewModel,
+                        filteredOpps = filteredOpps,
+                        currentStudent = currentStudent,
+                        onRegisterVolunteer = { volOppToRegister = it }
+                    )
+                }
+                ExploreSubTab.STUDENTS -> {
+                    // STUDENT DISCOVERY VIEW
+                    StudentDiscoveryView(
+                        viewModel = viewModel,
+                        discoveredStudents = discoveredStudents,
+                        uiState = uiState,
+                        onInviteStudent = { student ->
+                            inviteCandidateDialog = student
+                            inviteNoteText = "Hey ${student.name}! We saw your impressive skills in ${student.skills.take(2).joinToString(", ") { it.name }}. Would you like to team up for our upcoming project/hackathon?"
+                        }
+                    )
+                }
             }
         }
 
@@ -125,6 +182,24 @@ fun ExploreScreen(
                     .testTag("fab_post_opportunity")
             )
         }
+    }
+
+    // Club Application Dialog
+    clubOppToApply?.let { opp ->
+        com.example.ui.components.ClubApplicationDialog(
+            opportunity = opp,
+            viewModel = viewModel,
+            onDismiss = { clubOppToApply = null }
+        )
+    }
+
+    // Volunteering Registration Dialog
+    volOppToRegister?.let { opp ->
+        com.example.ui.components.VolunteerRegistrationDialog(
+            opportunity = opp,
+            viewModel = viewModel,
+            onDismiss = { volOppToRegister = null }
+        )
     }
 
     // Invitation Dialog
@@ -876,3 +951,575 @@ fun StudentDiscoveryView(
         }
     }
 }
+
+@Composable
+fun ClubRecruitmentView(
+    viewModel: SkillSyncViewModel,
+    filteredOpps: List<Pair<Opportunity, Int>>,
+    currentStudent: StudentProfile?,
+    onApplyClub: (Opportunity) -> Unit
+) {
+    val clubApplications by viewModel.clubApplications.collectAsState()
+    val clubOpps = filteredOpps.filter { it.first.category == OpportunityCategory.CLUB }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("club_recruitment_list"),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 96.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        // Hero Header
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = BrandIndigo,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text("👥", fontSize = 16.sp)
+                            }
+                        }
+                        Column {
+                            Text(
+                                text = "SGSITS CLUBS & SOCIETIES HUB",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = BrandIndigo,
+                                letterSpacing = 0.8.sp
+                            )
+                            Text(
+                                text = "Official Campus Recruitment 2026-27",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Direct application pipeline for technical, entrepreneurship, media, and social chapters: ACM, GDSC, E-Cell, Robotics Club, Pratibimb, and Rotaract. Choose your domain and articulate your passion.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 18.sp
+                    )
+                }
+            }
+        }
+
+        // My Active Applications Section
+        if (clubApplications.isNotEmpty()) {
+            item {
+                Text(
+                    text = "My Active Club Applications (${clubApplications.size})",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            items(clubApplications) { app ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, SkyBluePrimary.copy(alpha = 0.4f))
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(
+                                    text = app.clubName,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Role: ${app.roleApplied}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = SkyBlueDark,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = when (app.status) {
+                                    ApplicationStatus.ACCEPTED -> BrandEmerald.copy(alpha = 0.15f)
+                                    ApplicationStatus.UNDER_REVIEW -> BrandAmber.copy(alpha = 0.15f)
+                                    else -> SkyBluePrimary.copy(alpha = 0.15f)
+                                }
+                            ) {
+                                Text(
+                                    text = app.status.title,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = when (app.status) {
+                                        ApplicationStatus.ACCEPTED -> BrandEmerald
+                                        ApplicationStatus.UNDER_REVIEW -> BrandAmber
+                                        else -> SkyBluePrimary
+                                    },
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = "\"${app.sop}\"",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontStyle = FontStyle.Italic,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(Icons.Default.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(13.dp))
+                            Text(
+                                text = "Application forwarded to Club Executive Committee • Status tracks live",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Active Club Recruitments List Header
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Open Club Recruitment Drives (${clubOpps.size})",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Fall Semester 2026",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+        // List of Club Opportunities
+        items(clubOpps) { (opp, matchScore) ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { viewModel.selectOpportunity(opp.id) }
+                    .testTag("club_card_${opp.id}"),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(14.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = BrandIndigo.copy(alpha = 0.12f)
+                        ) {
+                            Text(
+                                text = "👥 ${opp.organizer}",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = BrandIndigo,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+
+                        MatchScoreBadge(score = matchScore)
+                    }
+
+                    Text(
+                        text = opp.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        text = opp.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 18.sp
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Icon(Icons.Default.Timer, contentDescription = null, tint = BrandAmber, modifier = Modifier.size(14.dp))
+                            Text("Deadline: ${opp.deadline}", style = MaterialTheme.typography.labelSmall)
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Icon(Icons.Default.Place, contentDescription = null, tint = SkyBluePrimary, modifier = Modifier.size(14.dp))
+                            Text(opp.location, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                        }
+                    }
+
+                    // Required Skills Chips
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        items(opp.requiredSkills) { skillName ->
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant
+                            ) {
+                                Text(
+                                    text = skillName,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                    }
+
+                    // Perks
+                    if (opp.prizes.isNotBlank()) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = BrandEmerald.copy(alpha = 0.1f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = BrandEmerald, modifier = Modifier.size(13.dp))
+                                Text(opp.prizes, style = MaterialTheme.typography.labelSmall, color = BrandEmerald, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+
+                    // Actions
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { onApplyClub(opp) },
+                            modifier = Modifier.weight(1.3f),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White)
+                        ) {
+                            Text("Apply to Club 🚀", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+
+                        OutlinedButton(
+                            onClick = { viewModel.openFindTeammates(opp.id) },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(Icons.Default.Groups, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Find Squad", fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun VolunteeringDrivesView(
+    viewModel: SkillSyncViewModel,
+    filteredOpps: List<Pair<Opportunity, Int>>,
+    currentStudent: StudentProfile?,
+    onRegisterVolunteer: (Opportunity) -> Unit
+) {
+    val volunteerRegistrations by viewModel.volunteerRegistrations.collectAsState()
+    val volunteerOpps = filteredOpps.filter { it.first.category == OpportunityCategory.VOLUNTEERING }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("volunteering_drives_list"),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 96.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        // Hero Header
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = BrandEmerald,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text("🤝", fontSize = 16.sp)
+                            }
+                        }
+                        Column {
+                            Text(
+                                text = "CAMPUS VOLUNTEERING & SERVICE",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = BrandEmerald,
+                                letterSpacing = 0.8.sp
+                            )
+                            Text(
+                                text = "Social Impact Drives & Fest Crew",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Join central campus initiatives: Aayam cultural fest volunteer taskforce, NSS 500-tree green plantation, university blood camps, and slum youth digital coding drives. Hours are verified and count towards university credit.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 18.sp
+                    )
+                }
+            }
+        }
+
+        // My Volunteer Registrations Section
+        if (volunteerRegistrations.isNotEmpty()) {
+            item {
+                Text(
+                    text = "My Volunteer Registrations (${volunteerRegistrations.size})",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            items(volunteerRegistrations) { vol ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, BrandEmerald.copy(alpha = 0.4f))
+                ) {
+                    Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(
+                                    text = vol.eventTitle,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Assigned Role: ${vol.preferredRole} • ${vol.hoursAvailable}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = BrandEmerald,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = BrandEmerald.copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    text = "REGISTERED",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = BrandEmerald,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+
+                        if (vol.motivation.isNotBlank()) {
+                            Text(
+                                text = "\"${vol.motivation}\"",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontStyle = FontStyle.Italic,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(Icons.Default.VerifiedUser, contentDescription = null, tint = BrandEmerald, modifier = Modifier.size(13.dp))
+                            Text(
+                                text = "Official university duty leaves & volunteer certificate credited upon completion",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = BrandEmerald,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Available Volunteering Drives Header
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Active Campus Volunteering Drives (${volunteerOpps.size})",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "NSS & Student Council",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = BrandEmerald
+                )
+            }
+        }
+
+        // List of Volunteering Drives
+        items(volunteerOpps) { (opp, matchScore) ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { viewModel.selectOpportunity(opp.id) }
+                    .testTag("vol_card_${opp.id}"),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(14.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = BrandEmerald.copy(alpha = 0.12f)
+                        ) {
+                            Text(
+                                text = "🤝 ${opp.organizer}",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = BrandEmerald,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+
+                        MatchScoreBadge(score = matchScore)
+                    }
+
+                    Text(
+                        text = opp.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        text = opp.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 18.sp
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Icon(Icons.Default.CalendarToday, contentDescription = null, tint = SkyBluePrimary, modifier = Modifier.size(14.dp))
+                            Text("Date: ${opp.date}", style = MaterialTheme.typography.labelSmall)
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Icon(Icons.Default.Place, contentDescription = null, tint = BrandEmerald, modifier = Modifier.size(14.dp))
+                            Text(opp.location, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                        }
+                    }
+
+                    // Perks / Duty leave badge
+                    if (opp.prizes.isNotBlank()) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = BrandEmerald.copy(alpha = 0.12f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(Icons.Default.Verified, contentDescription = null, tint = BrandEmerald, modifier = Modifier.size(13.dp))
+                                Text(opp.prizes, style = MaterialTheme.typography.labelSmall, color = BrandEmerald, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+
+                    // Actions
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { onRegisterVolunteer(opp) },
+                            modifier = Modifier.weight(1.3f),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandEmerald, contentColor = Color.White)
+                        ) {
+                            Text("Volunteer Now 🤝", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+
+                        OutlinedButton(
+                            onClick = { viewModel.openFindTeammates(opp.id) },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Icon(Icons.Default.GroupAdd, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Form Squad", fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

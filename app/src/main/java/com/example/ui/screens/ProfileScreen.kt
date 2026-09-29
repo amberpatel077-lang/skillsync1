@@ -22,10 +22,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -147,7 +149,7 @@ fun ProfileScreen(
                                         text = student.name.trim().take(1).uppercase(),
                                         fontWeight = FontWeight.ExtraBold,
                                         fontSize = 26.sp,
-                                        color = BrandIndigo
+                                        color = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             }
@@ -155,7 +157,7 @@ fun ProfileScreen(
                             // Camera button overlay
                             Surface(
                                 shape = CircleShape,
-                                color = BrandIndigo,
+                                color = MaterialTheme.colorScheme.primary,
                                 contentColor = Color.White,
                                 modifier = Modifier
                                     .size(24.dp)
@@ -221,12 +223,12 @@ fun ProfileScreen(
                     ) {
                         Surface(
                             shape = RoundedCornerShape(8.dp),
-                            color = BrandIndigo.copy(alpha = 0.15f)
+                            color = MaterialTheme.colorScheme.secondaryContainer
                         ) {
                             Text(
                                 text = "🎯 ${student.lookingFor.label}",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = BrandIndigo,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                 fontWeight = FontWeight.Bold
                             )
@@ -312,44 +314,51 @@ fun ProfileScreen(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
+                                    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+                                    val statusType = when (skill.level) {
+                                        SkillLevel.ADVANCED -> StatusType.SUCCESS
+                                        SkillLevel.INTERMEDIATE -> StatusType.INFO
+                                        SkillLevel.BEGINNER -> StatusType.PENDING
+                                    }
+                                    val statusColors = SemanticStatus.resolve(statusType, isDark)
+
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.weight(1f, fill = false)
                                     ) {
                                         Text(text = skill.iconEmoji, fontSize = 18.sp)
                                         Text(
                                             text = skill.name,
                                             style = MaterialTheme.typography.titleSmall,
-                                            fontWeight = FontWeight.SemiBold
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
                                         )
                                     }
+
+                                    Spacer(modifier = Modifier.width(8.dp))
 
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
                                         Surface(
-                                            color = when (skill.level) {
-                                                SkillLevel.ADVANCED -> BrandEmerald.copy(alpha = 0.2f)
-                                                SkillLevel.INTERMEDIATE -> SkyBluePrimary.copy(alpha = 0.2f)
-                                                SkillLevel.BEGINNER -> BrandAmber.copy(alpha = 0.2f)
-                                            },
+                                            color = statusColors.background,
+                                            border = androidx.compose.foundation.BorderStroke(1.dp, statusColors.border),
                                             shape = RoundedCornerShape(6.dp)
                                         ) {
                                             Text(
                                                 text = skill.level.displayName,
-                                                color = when (skill.level) {
-                                                    SkillLevel.ADVANCED -> BrandEmerald
-                                                    SkillLevel.INTERMEDIATE -> MaterialTheme.colorScheme.primary
-                                                    SkillLevel.BEGINNER -> BrandAmber
-                                                },
+                                                color = statusColors.text,
                                                 style = MaterialTheme.typography.labelSmall,
                                                 fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                                maxLines = 1
                                             )
                                         }
 
@@ -358,7 +367,7 @@ fun ProfileScreen(
                                                 val updatedSkills = student.skills.filter { it.name != skill.name }
                                                 viewModel.updateProfile(student.copy(skills = updatedSkills))
                                             },
-                                            modifier = Modifier.size(24.dp)
+                                            modifier = Modifier.size(36.dp)
                                         ) {
                                             Icon(Icons.Default.Close, contentDescription = "Remove", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                                         }
@@ -475,13 +484,13 @@ fun ProfileScreen(
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         items(student.interests) { interest ->
                             Surface(
-                                color = BrandIndigo.copy(alpha = 0.15f),
+                                color = MaterialTheme.colorScheme.secondaryContainer,
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Text(
                                     text = interest,
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = BrandIndigo,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
@@ -539,81 +548,7 @@ fun ProfileScreen(
                                     }
                                     Text(proj.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     Spacer(modifier = Modifier.height(4.dp))
-                                    Text("Stack: ${proj.techStack}", style = MaterialTheme.typography.labelSmall, color = BrandIndigo)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Section: Volunteering & Civic Impact
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(14.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, BrandEmerald.copy(alpha = 0.35f))
-            ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = BrandEmerald.copy(alpha = 0.15f),
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text("🤝", fontSize = 16.sp)
-                                }
-                            }
-                            Column {
-                                Text(
-                                    text = "Campus Volunteering & Social Impact",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = "${student.volunteerHours} Verified Activity Hours Logged",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = BrandEmerald,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                        }
-
-                        TextButton(onClick = {
-                            viewModel.setTab(AppTab.EXPLORE)
-                            viewModel.setExploreSubTab(com.example.viewmodel.ExploreSubTab.VOLUNTEERING)
-                        }) {
-                            Text("Drives →", fontSize = 12.sp, color = BrandEmerald, fontWeight = FontWeight.Bold)
-                        }
-                    }
-
-                    // Badges
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        items(student.volunteerBadges) { badge ->
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = BrandEmerald.copy(alpha = 0.1f),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, BrandEmerald.copy(alpha = 0.3f))
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Icon(Icons.Default.Verified, contentDescription = null, tint = BrandEmerald, modifier = Modifier.size(12.dp))
-                                    Text(badge, style = MaterialTheme.typography.labelSmall, color = BrandEmerald, fontWeight = FontWeight.SemiBold)
+                                    Text("Stack: ${proj.techStack}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
                                 }
                             }
                         }
@@ -905,19 +840,35 @@ fun ProfileScreen(
                     ) {
                         SkillLevel.values().forEach { level ->
                             val isSel = newSkillLevel == level
+                            val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+                            val statusType = when (level) {
+                                SkillLevel.ADVANCED -> StatusType.SUCCESS
+                                SkillLevel.INTERMEDIATE -> StatusType.INFO
+                                SkillLevel.BEGINNER -> StatusType.PENDING
+                            }
+                            val statusColors = SemanticStatus.resolve(statusType, isDark)
+
                             Surface(
                                 modifier = Modifier
+                                    .weight(1f)
+                                    .defaultMinSize(minHeight = 44.dp)
                                     .clip(RoundedCornerShape(8.dp))
                                     .clickable { newSkillLevel = level },
-                                color = if (isSel) SkyBluePrimary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant,
-                                border = if (isSel) androidx.compose.foundation.BorderStroke(1.dp, SkyBluePrimary) else null
+                                color = if (isSel) statusColors.background else MaterialTheme.colorScheme.surfaceVariant,
+                                border = if (isSel) androidx.compose.foundation.BorderStroke(1.dp, statusColors.border) else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                             ) {
-                                Text(
-                                    text = level.displayName,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal
-                                )
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
+                                ) {
+                                    Text(
+                                        text = level.displayName,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = if (isSel) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSel) statusColors.text else MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1
+                                    )
+                                }
                             }
                         }
                     }

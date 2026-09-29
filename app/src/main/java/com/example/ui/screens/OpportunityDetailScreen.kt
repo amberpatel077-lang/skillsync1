@@ -4,6 +4,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -14,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -62,13 +65,13 @@ fun OpportunityDetailDialog(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Surface(
-                    color = BrandIndigo.copy(alpha = 0.15f),
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
                         text = "${opp.category.iconEmoji} ${opp.category.displayName}",
                         style = MaterialTheme.typography.labelSmall,
-                        color = BrandIndigo,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
@@ -91,8 +94,8 @@ fun OpportunityDetailDialog(
             Text(
                 text = "Organized by ${opp.organizer}",
                 style = MaterialTheme.typography.bodyMedium,
-                color = SkyBlueDark,
-                fontWeight = FontWeight.Medium
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -156,36 +159,40 @@ fun OpportunityDetailDialog(
                     )
                 }
 
-                // Required Skills
+                // Required Skills (Horizontally scrollable so long names like "Competitive Programming" never truncate)
                 item {
                     Text("Required Skills", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(6.dp))
-                    Row(
+                    LazyRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        opp.requiredSkills.forEach { skillName ->
+                        items(opp.requiredSkills) { skillName ->
                             val hasSkill = currentStudent?.skills?.any {
                                 it.name.equals(skillName, ignoreCase = true) || skillName.contains(it.name, ignoreCase = true)
                             } ?: false
 
+                            val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+                            val statusColors = SemanticStatus.resolve(StatusType.SUCCESS, isDark)
+
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = if (hasSkill) SkyBluePrimary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant,
-                                border = if (hasSkill) androidx.compose.foundation.BorderStroke(1.dp, SkyBluePrimary) else null
+                                color = if (hasSkill) statusColors.background else MaterialTheme.colorScheme.surfaceVariant,
+                                border = if (hasSkill) androidx.compose.foundation.BorderStroke(1.dp, statusColors.border) else androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(5.dp)
                                 ) {
                                     if (hasSkill) {
-                                        Icon(Icons.Default.Check, contentDescription = null, tint = SkyBluePrimary, modifier = Modifier.size(12.dp))
+                                        Icon(Icons.Default.Check, contentDescription = null, tint = statusColors.text, modifier = Modifier.size(13.dp))
                                     }
                                     Text(
                                         text = skillName,
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = if (hasSkill) SkyBlueDark else MaterialTheme.colorScheme.onSurface
+                                        fontWeight = if (hasSkill) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (hasSkill) statusColors.text else MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                             }
@@ -204,18 +211,21 @@ fun OpportunityDetailDialog(
                 // Prizes & Benefits
                 if (opp.prizes.isNotBlank()) {
                     item {
+                        val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+                        val successColors = SemanticStatus.resolve(StatusType.SUCCESS, isDark)
                         Card(
-                            colors = CardDefaults.cardColors(containerColor = BrandEmerald.copy(alpha = 0.1f)),
-                            shape = RoundedCornerShape(10.dp)
+                            colors = CardDefaults.cardColors(containerColor = successColors.background),
+                            shape = RoundedCornerShape(10.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, successColors.border)
                         ) {
                             Row(
                                 modifier = Modifier.padding(12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = BrandEmerald)
+                                Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = successColors.text)
                                 Column {
-                                    Text("Prizes & Perks", fontWeight = FontWeight.Bold, color = BrandEmerald, style = MaterialTheme.typography.labelMedium)
+                                    Text("Prizes & Perks", fontWeight = FontWeight.Bold, color = successColors.text, style = MaterialTheme.typography.labelMedium)
                                     Text(opp.prizes, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
                                 }
                             }
@@ -224,7 +234,7 @@ fun OpportunityDetailDialog(
                 }
             }
 
-            // Bottom Action Bar: Adaptive based on category
+            // Bottom Action Bar: Adaptive based on category with strong visual hierarchy & accessibility touch targets
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -234,26 +244,36 @@ fun OpportunityDetailDialog(
                 if (opp.category == OpportunityCategory.CLUB) {
                     Button(
                         onClick = { showClubAppDialog = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 48.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(vertical = 12.dp)
                     ) {
-                        Text("👥", fontSize = 16.sp)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Apply to Club Recruitment 🚀", fontWeight = FontWeight.Bold)
+                        Icon(Icons.Default.Groups, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Apply to Club Recruitment", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
                 } else if (opp.category == OpportunityCategory.VOLUNTEERING) {
                     Button(
                         onClick = { showVolunteerRegDialog = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandEmerald, contentColor = Color.White),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 48.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = SemanticStatus.Success,
+                            contentColor = Color.White
+                        ),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(vertical = 12.dp)
                     ) {
-                        Text("🤝", fontSize = 16.sp)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Register as Campus Volunteer 🌟", fontWeight = FontWeight.Bold)
+                        Icon(Icons.Default.VolunteerActivism, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Register as Campus Volunteer", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
                 }
 
@@ -267,23 +287,31 @@ fun OpportunityDetailDialog(
                             onDismiss()
                             viewModel.openFindTeammates(targetId)
                         },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .defaultMinSize(minHeight = 48.dp),
                         colors = if (opp.category == OpportunityCategory.CLUB || opp.category == OpportunityCategory.VOLUNTEERING)
-                            ButtonDefaults.outlinedButtonColors() else ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White),
+                            ButtonDefaults.outlinedButtonColors() else ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(vertical = 12.dp)
                     ) {
                         Icon(Icons.Default.PersonSearch, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Find Teammates ⭐", fontWeight = FontWeight.Bold)
+                        Text("Find Teammates", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
 
                     OutlinedButton(
                         onClick = { showCreateTeamDialog = true },
                         shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.defaultMinSize(minHeight = 48.dp),
                         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)
                     ) {
-                        Text("Form Team")
+                        Icon(Icons.Default.GroupAdd, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Form Team", fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

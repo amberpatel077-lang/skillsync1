@@ -258,15 +258,15 @@ fun FindTeammatesSheet(
                                     }
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text("Interest (20%)", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text("${breakdown.interestScore}/20", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = BrandIndigo)
+                                        Text("${breakdown.interestScore}/20", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = SemanticStatus.InfoDark)
                                     }
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text("Avail (15%)", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text("${breakdown.availabilityScore}/15", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = BrandEmerald)
+                                        Text("${breakdown.availabilityScore}/15", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = SemanticStatus.SuccessDark)
                                     }
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text("Req (15%)", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text("${breakdown.requirementScore}/15", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = BrandAmber)
+                                        Text("${breakdown.requirementScore}/15", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = SemanticStatus.PendingDark)
                                     }
                                 }
                             }

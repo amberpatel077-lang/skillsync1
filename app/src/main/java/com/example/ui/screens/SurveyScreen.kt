@@ -104,7 +104,7 @@ fun SurveyScreen(
                                 text = "CAMPUS RESEARCH INSIGHTS",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = SkyBlueDark,
+                                color = MaterialTheme.colorScheme.primary,
                                 letterSpacing = 1.sp
                             )
                             Text(

@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -16,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -34,32 +37,41 @@ fun SkillBadge(
     modifier: Modifier = Modifier,
     isHighlighted: Boolean = false
 ) {
-    val levelColor = when (skill.level) {
-        SkillLevel.ADVANCED -> BrandEmerald
-        SkillLevel.INTERMEDIATE -> SkyBluePrimary
-        SkillLevel.BEGINNER -> BrandAmber
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val statusType = when (skill.level) {
+        SkillLevel.ADVANCED -> StatusType.SUCCESS
+        SkillLevel.INTERMEDIATE -> StatusType.INFO
+        SkillLevel.BEGINNER -> StatusType.PENDING
+    }
+    val statusColors = SemanticStatus.resolve(statusType, isDark)
+    val levelColor = statusColors.text
+
+    val (bgColor, borderColor) = if (isHighlighted) {
+        Pair(statusColors.background, statusColors.border)
+    } else {
+        Pair(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.outlineVariant)
     }
 
     Surface(
         modifier = modifier.clip(RoundedCornerShape(8.dp)),
-        color = if (isHighlighted) levelColor.copy(alpha = 0.18f) else MaterialTheme.colorScheme.surfaceVariant,
-        border = if (isHighlighted) androidx.compose.foundation.BorderStroke(1.dp, levelColor.copy(alpha = 0.7f)) else null
+        color = bgColor,
+        border = androidx.compose.foundation.BorderStroke(1.dp, borderColor)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
         ) {
-            Text(text = skill.iconEmoji, fontSize = 12.sp)
             Text(
                 text = skill.name,
                 style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1
             )
             Box(
                 modifier = Modifier
-                    .size(6.dp)
+                    .size(5.dp)
                     .clip(CircleShape)
                     .background(levelColor)
             )
@@ -67,7 +79,9 @@ fun SkillBadge(
                 text = skill.level.displayName,
                 style = MaterialTheme.typography.labelSmall,
                 color = levelColor,
-                fontSize = 10.sp
+                fontWeight = FontWeight.Bold,
+                fontSize = 10.sp,
+                maxLines = 1
             )
         }
     }
@@ -78,33 +92,36 @@ fun MatchScoreBadge(
     score: Int,
     modifier: Modifier = Modifier
 ) {
-    val (bgColor, textColor, label) = when {
-        score >= 85 -> Triple(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, "High Match")
-        score >= 70 -> Triple(BrandEmerald.copy(alpha = 0.15f), BrandEmerald, "Good Match")
-        else -> Triple(BrandAmber.copy(alpha = 0.15f), BrandAmber, "Partial Fit")
+    // 🟢 High Match (80%+) | 🔵 Good Match (65-79%) | 🟠 Partial Fit (<65%)
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val statusType = when {
+        score >= 80 -> StatusType.SUCCESS
+        score >= 65 -> StatusType.INFO
+        else -> StatusType.PENDING
     }
+    val statusColors = SemanticStatus.resolve(statusType, isDark)
 
     Surface(
         modifier = modifier.clip(RoundedCornerShape(20.dp)),
-        color = bgColor,
-        border = androidx.compose.foundation.BorderStroke(1.dp, textColor.copy(alpha = 0.6f))
+        color = statusColors.background,
+        border = androidx.compose.foundation.BorderStroke(1.dp, statusColors.border)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.5.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Stars,
                 contentDescription = null,
-                tint = textColor,
-                modifier = Modifier.size(14.dp)
+                tint = statusColors.text,
+                modifier = Modifier.size(13.dp)
             )
             Text(
                 text = "$score%",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = textColor
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = statusColors.text
             )
         }
     }
@@ -115,27 +132,30 @@ fun VerificationBadge(
     label: String = "SGSITS Verified",
     modifier: Modifier = Modifier
 ) {
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val statusColors = SemanticStatus.resolve(StatusType.SUCCESS, isDark)
+
     Surface(
         modifier = modifier.clip(RoundedCornerShape(12.dp)),
-        color = BrandEmerald.copy(alpha = 0.12f),
-        border = androidx.compose.foundation.BorderStroke(1.dp, BrandEmerald.copy(alpha = 0.4f))
+        color = statusColors.background,
+        border = androidx.compose.foundation.BorderStroke(1.dp, statusColors.border)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.5.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Verified,
                 contentDescription = null,
-                tint = BrandEmerald,
+                tint = statusColors.text,
                 modifier = Modifier.size(12.dp)
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                color = BrandEmerald,
-                fontWeight = FontWeight.Medium,
+                color = statusColors.text,
+                fontWeight = FontWeight.Bold,
                 fontSize = 11.sp
             )
         }
@@ -178,26 +198,29 @@ fun OpportunityCard(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Surface(
-                        color = BrandIndigo.copy(alpha = 0.15f),
-                        shape = RoundedCornerShape(6.dp)
+                        color = SemanticStatus.InfoBg,
+                        shape = RoundedCornerShape(6.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, SemanticStatus.InfoBorder)
                     ) {
                         Text(
                             text = "${opportunity.category.iconEmoji} ${opportunity.category.displayName}",
                             style = MaterialTheme.typography.labelSmall,
-                            color = BrandIndigo,
-                            fontWeight = FontWeight.SemiBold,
+                            color = SemanticStatus.Info,
+                            fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                         )
                     }
 
                     Surface(
                         color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = RoundedCornerShape(6.dp)
+                        shape = RoundedCornerShape(6.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     ) {
                         Text(
                             text = opportunity.mode.label,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Medium,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
                         )
                     }
@@ -270,59 +293,55 @@ fun OpportunityCard(
                 text = "Required Skills:",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.Bold
             )
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            Row(
+            LazyRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                opportunity.requiredSkills.take(3).forEach { skillName ->
+                items(opportunity.requiredSkills) { skillName ->
                     val hasSkill = currentStudent?.skills?.any {
                         it.name.equals(skillName, ignoreCase = true) || skillName.contains(it.name, ignoreCase = true)
                     } ?: false
 
                     Surface(
                         shape = RoundedCornerShape(6.dp),
-                        color = if (hasSkill) SkyBluePale else MaterialTheme.colorScheme.surfaceVariant,
-                        border = if (hasSkill) androidx.compose.foundation.BorderStroke(1.dp, SkyBlueBorder) else null
+                        color = if (hasSkill) SemanticStatus.SuccessBg else MaterialTheme.colorScheme.surfaceVariant,
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            if (hasSkill) SemanticStatus.SuccessBorder else MaterialTheme.colorScheme.outlineVariant
+                        )
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.5.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             if (hasSkill) {
                                 Icon(
                                     imageVector = Icons.Default.Check,
                                     contentDescription = null,
-                                    tint = SkyBlueDark,
-                                    modifier = Modifier.size(10.dp)
+                                    tint = SemanticStatus.Success,
+                                    modifier = Modifier.size(11.dp)
                                 )
                             }
                             Text(
                                 text = skillName,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (hasSkill) SkyBlueDark else MaterialTheme.colorScheme.onSurfaceVariant
+                                fontWeight = if (hasSkill) FontWeight.Bold else FontWeight.Medium,
+                                color = if (hasSkill) SemanticStatus.Success else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
-                }
-                if (opportunity.requiredSkills.size > 3) {
-                    Text(
-                        text = "+${opportunity.requiredSkills.size - 3} more",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.align(Alignment.CenterVertically)
-                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Action Buttons: Find Teammates (Primary Star) and Details
+            // Action Buttons: Find Teammates (Primary Action) and Details
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -331,22 +350,23 @@ fun OpportunityCard(
                     onClick = onFindTeammatesClick,
                     modifier = Modifier
                         .weight(1f)
+                        .heightIn(min = 44.dp)
                         .testTag("btn_find_teammates_${opportunity.id}"),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = SkyBluePrimary,
-                        contentColor = Color.White
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
                     shape = RoundedCornerShape(10.dp),
-                    contentPadding = PaddingValues(vertical = 10.dp)
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.PersonSearch,
                         contentDescription = null,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Find Teammates ⭐",
+                        text = "Find Teammates",
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.labelLarge
                     )
@@ -354,10 +374,11 @@ fun OpportunityCard(
 
                 OutlinedButton(
                     onClick = onCardClick,
+                    modifier = Modifier.heightIn(min = 44.dp),
                     shape = RoundedCornerShape(10.dp),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
                 ) {
-                    Text("Details")
+                    Text("Details", fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -505,7 +526,7 @@ fun StudentAvatar(
                 text = initial,
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = (size.value * 0.42f).sp,
-                color = BrandIndigo
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }
@@ -564,6 +585,179 @@ fun PillarCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 11.sp
                 )
+            }
+        }
+    }
+}
+
+/**
+ * Reusable Production Empty State Component
+ */
+@Composable
+fun EmptyStateView(
+    title: String,
+    message: String,
+    icon: ImageVector = Icons.Default.SearchOff,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 36.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            modifier = Modifier.size(72.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(36.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            lineHeight = 20.sp
+        )
+
+        if (actionLabel != null && onAction != null) {
+            Spacer(modifier = Modifier.height(18.dp))
+            Button(
+                onClick = onAction,
+                modifier = Modifier
+                    .heightIn(min = 44.dp)
+                    .testTag("btn_empty_state_action"),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text(actionLabel, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+/**
+ * Reusable Production Loading State Component
+ */
+@Composable
+fun LoadingStateView(
+    message: String = "Loading campus data...",
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        CircularProgressIndicator(
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(40.dp),
+            strokeWidth = 3.dp
+        )
+        Spacer(modifier = Modifier.height(14.dp))
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+/**
+ * Reusable Production Error State Component
+ */
+@Composable
+fun ErrorStateView(
+    title: String = "Something went wrong",
+    message: String = "Unable to load information. Please verify your connection.",
+    onRetry: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val critColors = SemanticStatus.resolve(StatusType.CRITICAL, isDark)
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Surface(
+            shape = CircleShape,
+            color = critColors.background,
+            border = androidx.compose.foundation.BorderStroke(1.dp, critColors.border),
+            modifier = Modifier.size(64.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Default.ErrorOutline,
+                    contentDescription = null,
+                    tint = critColors.text,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+
+        if (onRetry != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedButton(
+                onClick = onRetry,
+                modifier = Modifier.heightIn(min = 44.dp),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Retry", fontWeight = FontWeight.Bold)
             }
         }
     }

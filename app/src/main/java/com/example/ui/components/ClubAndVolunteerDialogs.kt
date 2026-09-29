@@ -61,7 +61,7 @@ fun ClubApplicationDialog(
             ) {
                 Surface(
                     shape = CircleShape,
-                    color = BrandIndigo.copy(alpha = 0.15f),
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     modifier = Modifier.size(36.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
@@ -77,7 +77,8 @@ fun ClubApplicationDialog(
                     Text(
                         text = "Official Club Recruitment 2026-27",
                         style = MaterialTheme.typography.labelSmall,
-                        color = SkyBlueDark
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -117,13 +118,15 @@ fun ClubApplicationDialog(
                                         text = role,
                                         style = MaterialTheme.typography.bodySmall,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected) SkyBlueDark else MaterialTheme.colorScheme.onSurface
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.weight(1f, fill = false),
+                                        maxLines = 2
                                     )
                                     if (isSelected) {
                                         Icon(
                                             imageVector = Icons.Default.CheckCircle,
                                             contentDescription = null,
-                                            tint = SkyBluePrimary,
+                                            tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(16.dp)
                                         )
                                     }
@@ -188,11 +191,16 @@ fun ClubApplicationDialog(
                         portfolioUrl = portfolioUrl
                     )
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
                 shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.testTag("btn_confirm_club_application")
+                modifier = Modifier
+                    .defaultMinSize(minHeight = 44.dp)
+                    .testTag("btn_confirm_club_application")
             ) {
-                Text("Submit Application 🚀", fontWeight = FontWeight.Bold)
+                Text("Submit Application", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
@@ -291,13 +299,15 @@ fun VolunteerRegistrationDialog(
                                         text = role,
                                         style = MaterialTheme.typography.bodySmall,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isSelected) BrandEmerald else MaterialTheme.colorScheme.onSurface
+                                        color = if (isSelected) SemanticStatus.Success else MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.weight(1f, fill = false),
+                                        maxLines = 2
                                     )
                                     if (isSelected) {
                                         Icon(
                                             imageVector = Icons.Default.CheckCircle,
                                             contentDescription = null,
-                                            tint = BrandEmerald,
+                                            tint = SemanticStatus.Success,
                                             modifier = Modifier.size(16.dp)
                                         )
                                     }
@@ -361,11 +371,13 @@ fun VolunteerRegistrationDialog(
                         motivation = motivationText
                     )
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = BrandEmerald, contentColor = Color.White),
+                colors = ButtonDefaults.buttonColors(containerColor = SemanticStatus.Success, contentColor = Color.White),
                 shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.testTag("btn_confirm_volunteer_registration")
+                modifier = Modifier
+                    .defaultMinSize(minHeight = 44.dp)
+                    .testTag("btn_confirm_volunteer_registration")
             ) {
-                Text("Confirm Registration 🤝", fontWeight = FontWeight.Bold)
+                Text("Confirm Registration", fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {

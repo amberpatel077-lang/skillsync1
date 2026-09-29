@@ -176,7 +176,7 @@ fun AuthScreen(
                         Text(
                             text = "COLLABORATE",
                             style = MaterialTheme.typography.labelSmall,
-                            color = BrandIndigo,
+                            color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.ExtraBold,
                             letterSpacing = 1.2.sp
                         )
@@ -262,7 +262,7 @@ fun AuthScreen(
                                 text = "Turn Interests Into Impact",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                color = BrandIndigo
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
@@ -1245,7 +1245,7 @@ fun AuthScreen(
                             Text(
                                 text = "Design Thinking Project",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = BrandIndigo,
+                                color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }

@@ -29,35 +29,35 @@ private val DarkColorScheme = darkColorScheme(
     surface = Color(0xFF111827),               // DARK SURFACE SLATE 900
     onSurface = Color(0xFFF8FAFC),             // CRISP LIGHT SLATE 50 TEXT
     surfaceVariant = Color(0xFF1E293B),        // DARK CONTAINER SLATE 800
-    onSurfaceVariant = Color(0xFF94A3B8),      // MUTED TEXT SLATE 400
-    outline = Color(0xFF334155),               // SLATE 700 BORDER
-    outlineVariant = Color(0xFF1E293B),
+    onSurfaceVariant = Color(0xFFCBD5E1),      // HIGH CONTRAST SLATE 300 TEXT (> 7:1)
+    outline = Color(0xFF475569),               // SLATE 600 BORDER
+    outlineVariant = Color(0xFF334155),
     inverseSurface = Color(0xFFF1F5F9),
     inverseOnSurface = Color(0xFF0A0F1D),
     inversePrimary = SkyBluePrimary
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = SkyBluePrimary,
+    primary = SkyBlueDark,                     // Sky 700 - Deep sky blue for crisp high contrast
     onPrimary = Color.White,
     primaryContainer = SkyBluePale,
-    onPrimaryContainer = SkyBlueDeepNavy,
-    secondary = SkyBlueLight,
-    onSecondary = SkyBlueDeepNavy,
+    onPrimaryContainer = Color(0xFF0C4A6E),
+    secondary = SkyBlueDark,
+    onSecondary = Color.White,
     secondaryContainer = SkyBluePale,
-    onSecondaryContainer = SkyBlueDark,
+    onSecondaryContainer = Color(0xFF0C4A6E),
     tertiary = BrandEmerald,
     onTertiary = Color.White,
     tertiaryContainer = Color(0xFFCCFBF1),
     onTertiaryContainer = Color(0xFF115E59),
-    background = SkyBlueUltraPale,
-    onBackground = SkyBlueDeepNavy,
+    background = Color(0xFFF8FAFC),            // Clean Slate 50 background
+    onBackground = Color(0xFF0F172A),          // Deep Slate 900 text (> 12:1)
     surface = Color.White,
-    onSurface = SkyBlueDeepNavy,
-    surfaceVariant = SkyBluePale,
-    onSurfaceVariant = Color(0xFF1E293B),
-    outline = SkyBlueBorder,
-    outlineVariant = Color(0xFFBAE6FD)
+    onSurface = Color(0xFF0F172A),             // Deep Slate 900 text (> 12:1)
+    surfaceVariant = Color(0xFFF1F5F9),        // Slate 100 card surface
+    onSurfaceVariant = Color(0xFF334155),      // Slate 700 text (> 5.8:1 WCAG AA compliant)
+    outline = Color(0xFF94A3B8),               // Slate 400
+    outlineVariant = Color(0xFFCBD5E1)
 )
 
 @Composable

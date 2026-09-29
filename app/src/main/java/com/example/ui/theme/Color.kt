@@ -58,3 +58,56 @@ val Pink80 = BrandRose
 val Purple40 = SkyBluePrimary
 val PurpleGrey40 = DarkTextTertiary
 val Pink40 = BrandRose
+
+// Strict Semantic Status System (WCAG AA Compliant & Dark-Theme Adaptive)
+data class StatusColors(
+    val text: Color,
+    val background: Color,
+    val border: Color
+)
+
+object SemanticStatus {
+    // 🔵 Informational (Category badges, general info, discovery filters)
+    val Info = Color(0xFF0284C7)         // Sky 600
+    val InfoBg = Color(0xFFE0F2FE)       // Sky 100
+    val InfoDark = Color(0xFF38BDF8)     // Sky 400
+    val InfoDarkBg = Color(0xFF0C4A6E)   // Sky 900
+    val InfoBorder = Color(0xFFBAE6FD)
+
+    // 🟢 Active / Verified / Success (open now, verified, available, accepted)
+    val Success = Color(0xFF16A34A)      // Green 600
+    val SuccessBg = Color(0xFFDCFCE7)    // Green 100
+    val SuccessDark = Color(0xFF4ADE80)  // Green 400
+    val SuccessDarkBg = Color(0xFF14532D)// Green 900
+    val SuccessBorder = Color(0xFF86EFAC)
+
+    // 🟠 Deadline / Pending (closing soon, under review, waiting, competition countdown)
+    val Pending = Color(0xFFD97706)      // Amber 600
+    val PendingBg = Color(0xFFFEF3C7)    // Amber 100
+    val PendingDark = Color(0xFFFBBF24)  // Amber 400
+    val PendingDarkBg = Color(0xFF78350F)// Amber 900
+    val PendingBorder = Color(0xFFFDE68A)
+
+    // 🔴 Error / Critical (urgent deadline, expired, rejected)
+    val Critical = Color(0xFFDC2626)     // Red 600
+    val CriticalBg = Color(0xFFFEE2E2)   // Red 100
+    val CriticalDark = Color(0xFFF87171) // Red 400
+    val CriticalDarkBg = Color(0xFF7F1D1D)// Red 900
+    val CriticalBorder = Color(0xFFFECACA)
+
+    fun resolve(type: StatusType, isDark: Boolean): StatusColors {
+        return when (type) {
+            StatusType.INFO -> if (isDark) StatusColors(InfoDark, InfoDarkBg, Color(0xFF0284C7)) else StatusColors(Info, InfoBg, InfoBorder)
+            StatusType.SUCCESS -> if (isDark) StatusColors(SuccessDark, SuccessDarkBg, Color(0xFF16A34A)) else StatusColors(Success, SuccessBg, SuccessBorder)
+            StatusType.PENDING -> if (isDark) StatusColors(PendingDark, PendingDarkBg, Color(0xFFD97706)) else StatusColors(Pending, PendingBg, PendingBorder)
+            StatusType.CRITICAL -> if (isDark) StatusColors(CriticalDark, CriticalDarkBg, Color(0xFFDC2626)) else StatusColors(Critical, CriticalBg, CriticalBorder)
+        }
+    }
+}
+
+enum class StatusType {
+    INFO,       // 🔵 Informational (Category, mode, general tags)
+    SUCCESS,    // 🟢 Active / verified / success (open now, verified, available, accepted)
+    PENDING,    // 🟠 Deadline / pending (closing soon, under review, waiting, competition countdown)
+    CRITICAL    // 🔴 Error / critical (urgent deadline, expired, rejected)
+}

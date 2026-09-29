@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -616,27 +617,17 @@ fun OpportunityHubView(
         // Mode Filter (Online / In-Person / Hybrid)
         item {
             Spacer(modifier = Modifier.height(6.dp))
-            Row(
+            LazyRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                listOf(null to "All Modes", OpportunityMode.ONLINE to "🌐 Online", OpportunityMode.OFFLINE to "📍 In-Person", OpportunityMode.HYBRID to "⚡ Hybrid").forEach { (mode, title) ->
+                items(listOf(null to "All Modes", OpportunityMode.ONLINE to "🌐 Online", OpportunityMode.OFFLINE to "📍 In-Person", OpportunityMode.HYBRID to "⚡ Hybrid")) { (mode, title) ->
                     val isSelected = uiState.selectedModeFilter == mode
-                    Surface(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .clickable { viewModel.setModeFilter(mode) },
-                        color = if (isSelected) BrandIndigo.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surfaceVariant,
-                        border = if (isSelected) androidx.compose.foundation.BorderStroke(1.dp, BrandIndigo) else null
-                    ) {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { viewModel.setModeFilter(mode) },
+                        label = { Text(title) }
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -672,17 +663,41 @@ fun OpportunityHubView(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 32.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(vertical = 24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    shape = RoundedCornerShape(14.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                 ) {
                     Column(
                         modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(imageVector = Icons.Default.SearchOff, contentDescription = null, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("No opportunities found", fontWeight = FontWeight.Bold)
-                        Text("Try resetting filters or searching with different keywords.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("No opportunities found", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = "No opportunities match your current filters. Clear filters to explore all listings.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Button(
+                            onClick = {
+                                viewModel.setOppSearchQuery("")
+                                viewModel.setCategoryFilter(null)
+                                viewModel.setSkillFilter(null)
+                                viewModel.setModeFilter(null)
+                            },
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier
+                                .defaultMinSize(minHeight = 44.dp)
+                                .testTag("btn_reset_filters")
+                        ) {
+                            Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Reset All Filters", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
@@ -814,7 +829,48 @@ fun StudentDiscoveryView(
         }
 
         // List of Student Cards
-        items(discoveredStudents) { (student, matchPercent) ->
+        if (discoveredStudents.isEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    shape = RoundedCornerShape(14.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Default.PersonSearch, contentDescription = null, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("No Peers Found", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = "No students match your current branch or skill filters. Reset filters to view all campus peers.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Button(
+                            onClick = {
+                                viewModel.setStudentSearchQuery("")
+                                viewModel.setStudentBranchFilter(null)
+                                viewModel.setStudentSkillFilter(null)
+                            },
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.defaultMinSize(minHeight = 44.dp)
+                        ) {
+                            Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Reset Peer Filters", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        } else {
+            items(discoveredStudents) { (student, matchPercent) ->
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -913,12 +969,13 @@ fun StudentDiscoveryView(
 
                         Surface(
                             shape = RoundedCornerShape(6.dp),
-                            color = BrandIndigo.copy(alpha = 0.12f)
+                            color = MaterialTheme.colorScheme.secondaryContainer
                         ) {
                             Text(
                                 text = student.lookingFor.label,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = BrandIndigo,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
                             )
                         }
@@ -1054,7 +1111,7 @@ fun ClubRecruitmentView(
                     ) {
                         Surface(
                             shape = CircleShape,
-                            color = BrandIndigo,
+                            color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(32.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
@@ -1066,7 +1123,7 @@ fun ClubRecruitmentView(
                                 text = "SGSITS CLUBS & SOCIETIES HUB",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = BrandIndigo,
+                                color = MaterialTheme.colorScheme.primary,
                                 letterSpacing = 0.8.sp
                             )
                             Text(
@@ -1081,7 +1138,7 @@ fun ClubRecruitmentView(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Direct application pipeline for technical, entrepreneurship, media, and social chapters: ACM, GDSC, E-Cell, Robotics Club, Pratibimb, and Rotaract. Choose your domain and articulate your passion.",
+                        text = "Direct application pipeline for technical and cultural chapters: ACM, GDSC, E-Cell, Robotics Club, Pratibimb, and Rotaract.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 18.sp
@@ -1123,28 +1180,31 @@ fun ClubRecruitmentView(
                                 Text(
                                     text = "Role: ${app.roleApplied}",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = SkyBlueDark,
-                                    fontWeight = FontWeight.SemiBold
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
 
+                            val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+                            val statusColors = SemanticStatus.resolve(
+                                when (app.status) {
+                                    ApplicationStatus.ACCEPTED -> StatusType.SUCCESS
+                                    ApplicationStatus.UNDER_REVIEW -> StatusType.PENDING
+                                    else -> StatusType.INFO
+                                },
+                                isDark
+                            )
+
                             Surface(
                                 shape = RoundedCornerShape(6.dp),
-                                color = when (app.status) {
-                                    ApplicationStatus.ACCEPTED -> BrandEmerald.copy(alpha = 0.15f)
-                                    ApplicationStatus.UNDER_REVIEW -> BrandAmber.copy(alpha = 0.15f)
-                                    else -> SkyBluePrimary.copy(alpha = 0.15f)
-                                }
+                                color = statusColors.background,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, statusColors.border)
                             ) {
                                 Text(
                                     text = app.status.title,
                                     style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = when (app.status) {
-                                        ApplicationStatus.ACCEPTED -> BrandEmerald
-                                        ApplicationStatus.UNDER_REVIEW -> BrandAmber
-                                        else -> SkyBluePrimary
-                                    },
+                                    fontWeight = FontWeight.Bold,
+                                    color = statusColors.text,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
@@ -1195,6 +1255,35 @@ fun ClubRecruitmentView(
             }
         }
 
+        if (clubOpps.isEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    shape = RoundedCornerShape(14.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Default.Groups, contentDescription = null, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("No Club Drives Found", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Text("No clubs match your current search query.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Button(
+                            onClick = { viewModel.setOppSearchQuery("") },
+                            modifier = Modifier.defaultMinSize(minHeight = 44.dp)
+                        ) {
+                            Text("Clear Search", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
         // List of Club Opportunities
         items(clubOpps) { (opp, matchScore) ->
             Card(
@@ -1214,13 +1303,13 @@ fun ClubRecruitmentView(
                     ) {
                         Surface(
                             shape = RoundedCornerShape(6.dp),
-                            color = BrandIndigo.copy(alpha = 0.12f)
+                            color = MaterialTheme.colorScheme.primaryContainer
                         ) {
                             Text(
                                 text = "👥 ${opp.organizer}",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = BrandIndigo,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
@@ -1238,7 +1327,9 @@ fun ClubRecruitmentView(
                         text = opp.description,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 18.sp
+                        lineHeight = 18.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
 
                     Row(
@@ -1290,26 +1381,33 @@ fun ClubRecruitmentView(
                         }
                     }
 
-                    // Actions
+                    // Actions with strong visual hierarchy
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Button(
                             onClick = { onApplyClub(opp) },
-                            modifier = Modifier.weight(1.3f),
+                            modifier = Modifier
+                                .weight(1.3f)
+                                .defaultMinSize(minHeight = 44.dp),
                             shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White)
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
                         ) {
-                            Text("Apply to Club 🚀", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Text("Apply to Club", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
 
                         OutlinedButton(
                             onClick = { viewModel.openFindTeammates(opp.id) },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .defaultMinSize(minHeight = 44.dp),
                             shape = RoundedCornerShape(10.dp)
                         ) {
-                            Icon(Icons.Default.Groups, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Icon(Icons.Default.Groups, contentDescription = null, modifier = Modifier.size(15.dp))
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Find Squad", fontSize = 12.sp)
                         }
@@ -1425,15 +1523,18 @@ fun VolunteeringDrivesView(
                                 )
                             }
 
+                            val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+                            val regColors = SemanticStatus.resolve(StatusType.SUCCESS, isDark)
                             Surface(
                                 shape = RoundedCornerShape(6.dp),
-                                color = BrandEmerald.copy(alpha = 0.15f)
+                                color = regColors.background,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, regColors.border)
                             ) {
                                 Text(
                                     text = "REGISTERED",
                                     style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = BrandEmerald,
+                                    fontWeight = FontWeight.Bold,
+                                    color = regColors.text,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
                             }
@@ -1481,8 +1582,37 @@ fun VolunteeringDrivesView(
                 Text(
                     text = "NSS & Student Council",
                     style = MaterialTheme.typography.labelSmall,
-                    color = BrandEmerald
+                    color = SemanticStatus.Success
                 )
+            }
+        }
+
+        if (volunteerOpps.isEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    shape = RoundedCornerShape(14.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Default.VolunteerActivism, contentDescription = null, modifier = Modifier.size(40.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("No Volunteering Drives Found", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Text("No volunteering drives match your current search query.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Button(
+                            onClick = { viewModel.setOppSearchQuery("") },
+                            modifier = Modifier.defaultMinSize(minHeight = 44.dp)
+                        ) {
+                            Text("Clear Search", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
             }
         }
 
@@ -1505,13 +1635,13 @@ fun VolunteeringDrivesView(
                     ) {
                         Surface(
                             shape = RoundedCornerShape(6.dp),
-                            color = BrandEmerald.copy(alpha = 0.12f)
+                            color = SemanticStatus.SuccessBg
                         ) {
                             Text(
                                 text = "🤝 ${opp.organizer}",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = BrandEmerald,
+                                color = SemanticStatus.Success,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
@@ -1529,7 +1659,9 @@ fun VolunteeringDrivesView(
                         text = opp.description,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 18.sp
+                        lineHeight = 18.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
 
                     Row(
@@ -1564,26 +1696,30 @@ fun VolunteeringDrivesView(
                         }
                     }
 
-                    // Actions
+                    // Actions with strong visual hierarchy
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Button(
                             onClick = { onRegisterVolunteer(opp) },
-                            modifier = Modifier.weight(1.3f),
+                            modifier = Modifier
+                                .weight(1.3f)
+                                .defaultMinSize(minHeight = 44.dp),
                             shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = BrandEmerald, contentColor = Color.White)
+                            colors = ButtonDefaults.buttonColors(containerColor = SemanticStatus.Success, contentColor = Color.White)
                         ) {
-                            Text("Volunteer Now 🤝", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Text("Volunteer Now", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
 
                         OutlinedButton(
                             onClick = { viewModel.openFindTeammates(opp.id) },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .defaultMinSize(minHeight = 44.dp),
                             shape = RoundedCornerShape(10.dp)
                         ) {
-                            Icon(Icons.Default.GroupAdd, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Icon(Icons.Default.GroupAdd, contentDescription = null, modifier = Modifier.size(15.dp))
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Form Squad", fontSize = 12.sp)
                         }

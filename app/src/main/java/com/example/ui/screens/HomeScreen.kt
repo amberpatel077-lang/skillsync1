@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -58,6 +59,7 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showStudentSwitcher by remember { mutableStateOf(false) }
     var showResearchSidePanel by remember { mutableStateOf(false) }
+    var showAllOpportunities by remember { mutableStateOf(false) }
 
     BackHandler(enabled = showResearchSidePanel) {
         showResearchSidePanel = false
@@ -163,68 +165,72 @@ fun HomeScreen(
             }
         }
 
-        // Hero Visual Banner
+        // Compact Hero Visual Area (Frees vertical space for immediate opportunity discovery)
         item {
-            Box(
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                    .testTag("hero_compact_card"),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.img_hero_collaboration),
-                    contentDescription = "Students collaborating on tech projects",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-                // Gradient Scrim adapted to theme background
-                Box(
+                Row(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    MaterialTheme.colorScheme.background.copy(alpha = 0.75f),
-                                    MaterialTheme.colorScheme.background
-                                )
-                            )
-                        )
-                )
-
-                // Banner Overlay Text
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(16.dp)
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Surface(
-                        color = BrandIndigo.copy(alpha = 0.15f),
-                        shape = RoundedCornerShape(20.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, BrandIndigo.copy(alpha = 0.3f))
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 12.dp)
                     ) {
+                        Surface(
+                            color = SemanticStatus.InfoBg,
+                            shape = RoundedCornerShape(6.dp),
+                            border = androidx.compose.foundation.BorderStroke(0.8.dp, SemanticStatus.InfoBorder)
+                        ) {
+                            Text(
+                                text = "SGSITS SMART MATCH",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = SemanticStatus.Info,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.5.dp),
+                                fontSize = 9.5.sp,
+                                letterSpacing = 0.5.sp
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
                         Text(
-                            text = "CONNECT • COLLABORATE • GROW",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = BrandIndigo,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                            letterSpacing = 1.sp
+                            text = "Turn Interests Into Impact",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Connect with peers for hackathons, clubs & labs",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Text(
-                        text = "Turn Interests Into Impact",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Text(
-                        text = "Smart skill-based matching for college hackathons & projects",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Medium
+                    Image(
+                        painter = painterResource(id = R.drawable.img_hero_collaboration),
+                        contentDescription = "Students collaborating on tech projects",
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(RoundedCornerShape(10.dp)),
+                        contentScale = ContentScale.Crop
                     )
                 }
             }
@@ -344,23 +350,25 @@ fun HomeScreen(
                     ) {
                         Surface(
                             shape = RoundedCornerShape(6.dp),
-                            color = BrandEmerald.copy(alpha = 0.12f)
+                            color = SemanticStatus.SuccessBg,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, SemanticStatus.SuccessBorder)
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                horizontalArrangement = Arrangement.spacedBy(5.dp)
                             ) {
                                 Box(
                                     modifier = Modifier
                                         .size(6.dp)
                                         .clip(CircleShape)
-                                        .background(BrandEmerald)
+                                        .background(SemanticStatus.Success)
                                 )
                                 Text(
                                     text = "Available: ${currentStudent?.availability?.summaryText() ?: "Active"}",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = BrandEmerald,
+                                    color = SemanticStatus.Success,
+                                    fontWeight = FontWeight.Bold,
                                     fontSize = 11.sp,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
@@ -410,19 +418,30 @@ fun HomeScreen(
                         )
                     }
 
-                    TextButton(
+                    Button(
                         onClick = {
                             viewModel.setOppSearchQuery("")
                             viewModel.setExploreSubTab(ExploreSubTab.OPPORTUNITIES)
                             viewModel.setTab(AppTab.EXPLORE)
                         },
-                        contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.defaultMinSize(minHeight = 40.dp)
                     ) {
                         Text(
-                            text = "Browse Hub",
-                            color = SkyBluePrimary,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 13.sp
+                            text = "Explore Hub",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp)
                         )
                     }
                 }
@@ -445,6 +464,7 @@ fun HomeScreen(
                             title = "Clubs & Chapters",
                             badgeText = "SGSITS Inductions",
                             liveStatusText = "Active",
+                            statusType = StatusType.SUCCESS,
                             description = "Join ACM, GDSC, Club inductions & core roles",
                             emoji = "👥",
                             accentColor = BrandIndigo,
@@ -470,6 +490,7 @@ fun HomeScreen(
                             title = "Volunteering",
                             badgeText = "Activity Credits",
                             liveStatusText = "5 Drives",
+                            statusType = StatusType.PENDING,
                             description = "NSS, Aayam festival teams & campus outreach",
                             emoji = "🤝",
                             accentColor = BrandEmerald,
@@ -503,6 +524,7 @@ fun HomeScreen(
                             title = "Find Teammates",
                             badgeText = "Skill Matching",
                             liveStatusText = "Instant",
+                            statusType = StatusType.SUCCESS,
                             description = "Connect with SGSITS peers for hackathon squads",
                             emoji = "🔍",
                             accentColor = SkyBlueDark,
@@ -528,6 +550,7 @@ fun HomeScreen(
                             title = "Hackathons",
                             badgeText = "Live Contests",
                             liveStatusText = "SIH 2026",
+                            statusType = StatusType.PENDING,
                             description = "Smart India Hackathon, college techfests & coding",
                             emoji = "🏆",
                             accentColor = BrandAmber,
@@ -550,57 +573,91 @@ fun HomeScreen(
                         )
                     }
 
-                    // Row 3: My Teams & Workspaces | Research & Lab Projects
-                    Row(
+                    // Progressive Disclosure: Row 3 revealed on user demand to reduce cognitive load
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = showAllOpportunities,
+                        enter = androidx.compose.animation.expandVertically() + androidx.compose.animation.fadeIn(),
+                        exit = androidx.compose.animation.shrinkVertically() + androidx.compose.animation.fadeOut()
+                    ) {
+                        // Row 3: My Teams & Workspaces | Research & Lab Projects
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(IntrinsicSize.Max),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            CampusOpportunityBar(
+                                title = "My Teams",
+                                badgeText = "Collaboration",
+                                liveStatusText = "Live Sync",
+                                statusType = StatusType.SUCCESS,
+                                description = "Manage joined squads, tasks, chat & milestones",
+                                emoji = "⚡",
+                                accentColor = BrandPurple,
+                                actionLabel = "Open",
+                                quickTags = listOf("Sprint", "Squad Chat"),
+                                testTag = "btn_shortcut_teams",
+                                onClick = {
+                                    viewModel.setTab(AppTab.TEAMS)
+                                },
+                                onTagClick = { _ ->
+                                    viewModel.setTab(AppTab.TEAMS)
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                            )
+
+                            CampusOpportunityBar(
+                                title = "Research & Labs",
+                                badgeText = "Faculty Projects",
+                                liveStatusText = "Grants Open",
+                                statusType = StatusType.PENDING,
+                                description = "Join professor research groups, IoT labs & grants",
+                                emoji = "🔬",
+                                accentColor = Color(0xFF00897B),
+                                actionLabel = "Apply",
+                                quickTags = listOf("AI Lab", "IoT"),
+                                testTag = "btn_shortcut_research",
+                                onClick = {
+                                    viewModel.setOppSearchQuery("")
+                                    viewModel.setExploreSubTab(ExploreSubTab.RESEARCH)
+                                    viewModel.setTab(AppTab.EXPLORE)
+                                },
+                                onTagClick = { tag ->
+                                    viewModel.setExploreSubTab(ExploreSubTab.RESEARCH)
+                                    viewModel.setOppSearchQuery(tag)
+                                    viewModel.setTab(AppTab.EXPLORE)
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                            )
+                        }
+                    }
+
+                    // Progressive Disclosure Toggle Button
+                    OutlinedButton(
+                        onClick = { showAllOpportunities = !showAllOpportunities },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(IntrinsicSize.Max),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            .padding(top = 2.dp)
+                            .testTag("btn_toggle_more_opportunities"),
+                        shape = RoundedCornerShape(10.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     ) {
-                        CampusOpportunityBar(
-                            title = "My Teams",
-                            badgeText = "Collaboration",
-                            liveStatusText = "Live Sync",
-                            description = "Manage joined squads, tasks, chat & milestones",
-                            emoji = "⚡",
-                            accentColor = BrandPurple,
-                            actionLabel = "Open",
-                            quickTags = listOf("Sprint", "Squad Chat"),
-                            testTag = "btn_shortcut_teams",
-                            onClick = {
-                                viewModel.setTab(AppTab.TEAMS)
-                            },
-                            onTagClick = { _ ->
-                                viewModel.setTab(AppTab.TEAMS)
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
+                        Icon(
+                            imageVector = if (showAllOpportunities) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
                         )
-
-                        CampusOpportunityBar(
-                            title = "Research & Labs",
-                            badgeText = "Faculty Projects",
-                            liveStatusText = "Grants Open",
-                            description = "Join professor research groups, IoT labs & grants",
-                            emoji = "🔬",
-                            accentColor = Color(0xFF00897B),
-                            actionLabel = "Apply",
-                            quickTags = listOf("AI Lab", "IoT"),
-                            testTag = "btn_shortcut_research",
-                            onClick = {
-                                viewModel.setOppSearchQuery("")
-                                viewModel.setExploreSubTab(ExploreSubTab.RESEARCH)
-                                viewModel.setTab(AppTab.EXPLORE)
-                            },
-                            onTagClick = { tag ->
-                                viewModel.setExploreSubTab(ExploreSubTab.RESEARCH)
-                                viewModel.setOppSearchQuery(tag)
-                                viewModel.setTab(AppTab.EXPLORE)
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (showAllOpportunities) "Show Less" else "Show All Hubs (+2: My Teams, Research)",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
@@ -1142,6 +1199,7 @@ fun CampusOpportunityBar(
     accentColor: Color,
     testTag: String,
     liveStatusText: String? = null,
+    statusType: StatusType = StatusType.INFO,
     quickTags: List<String> = emptyList(),
     actionLabel: String = "Explore",
     onClick: () -> Unit,
@@ -1183,6 +1241,11 @@ fun CampusOpportunityBar(
         label = "pulseAlpha"
     )
 
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val statusColors = SemanticStatus.resolve(statusType, isDark)
+    val badgeColors = SemanticStatus.resolve(StatusType.INFO, isDark)
+    val resolvedAccent = if (isDark) MaterialTheme.colorScheme.primary else accentColor
+
     Surface(
         onClick = onClick,
         interactionSource = interactionSource,
@@ -1190,7 +1253,7 @@ fun CampusOpportunityBar(
         color = if (isPressed) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f) else MaterialTheme.colorScheme.surface,
         border = BorderStroke(
             width = if (isPressed) 1.5.dp else 1.dp,
-            color = if (isPressed) accentColor else accentColor.copy(alpha = 0.32f)
+            color = if (isPressed) resolvedAccent else MaterialTheme.colorScheme.outlineVariant
         ),
         shadowElevation = shadowElevation,
         modifier = modifier
@@ -1213,8 +1276,8 @@ fun CampusOpportunityBar(
                 ) {
                     Surface(
                         shape = RoundedCornerShape(10.dp),
-                        color = accentColor.copy(alpha = if (isPressed) 0.22f else 0.12f),
-                        border = BorderStroke(1.dp, accentColor.copy(alpha = if (isPressed) 0.45f else 0.25f)),
+                        color = resolvedAccent.copy(alpha = if (isPressed) 0.22f else 0.12f),
+                        border = BorderStroke(1.dp, resolvedAccent.copy(alpha = if (isPressed) 0.45f else 0.25f)),
                         modifier = Modifier.size(38.dp)
                     ) {
                         Box(
@@ -1234,21 +1297,21 @@ fun CampusOpportunityBar(
                             horizontalArrangement = Arrangement.spacedBy(3.dp),
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(accentColor.copy(alpha = 0.12f))
-                                .padding(horizontal = 5.dp, vertical = 2.dp)
+                                .background(statusColors.background)
+                                .padding(horizontal = 6.dp, vertical = 2.5.dp)
                         ) {
                             Box(
                                 modifier = Modifier
                                     .size(5.dp)
                                     .clip(CircleShape)
-                                    .background(accentColor.copy(alpha = pulseAlpha))
+                                    .background(statusColors.text.copy(alpha = pulseAlpha))
                             )
                             Text(
                                 text = liveStatusText,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = accentColor,
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Bold,
+                                color = statusColors.text,
+                                fontSize = 9.5.sp,
+                                fontWeight = FontWeight.ExtraBold,
                                 maxLines = 1
                             )
                         }
@@ -1257,18 +1320,19 @@ fun CampusOpportunityBar(
 
                 Spacer(modifier = Modifier.height(7.dp))
 
-                // Badge Tag
+                // Badge Tag: Standardized 🔵 Informational
                 Surface(
                     shape = RoundedCornerShape(5.dp),
-                    color = accentColor.copy(alpha = 0.14f)
+                    color = badgeColors.background,
+                    border = BorderStroke(0.8.dp, badgeColors.border)
                 ) {
                     Text(
                         text = badgeText,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = accentColor,
+                        color = badgeColors.text,
                         fontSize = 9.5.sp,
-                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.5.dp),
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -1300,7 +1364,7 @@ fun CampusOpportunityBar(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                // Quick Tags (clickable pills)
+                // Quick Tags (clickable pills) - small-screen overflow protected
                 if (quickTags.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(6.dp))
                     Row(
@@ -1318,14 +1382,15 @@ fun CampusOpportunityBar(
                                     }
                                 },
                                 shape = RoundedCornerShape(5.dp),
-                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                                border = BorderStroke(0.6.dp, accentColor.copy(alpha = 0.28f))
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                border = BorderStroke(0.6.dp, MaterialTheme.colorScheme.outlineVariant),
+                                modifier = Modifier.weight(1f, fill = false)
                             ) {
                                 Text(
                                     text = "#$tag",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontWeight = FontWeight.SemiBold,
+                                    fontWeight = FontWeight.Bold,
                                     fontSize = 9.5.sp,
                                     modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
                                     maxLines = 1,
@@ -1340,11 +1405,11 @@ fun CampusOpportunityBar(
             Column {
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Dynamic Action CTA Button with animated arrow nudge
+                // Dynamic Action CTA Button
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = if (isPressed) accentColor else accentColor.copy(alpha = 0.12f),
-                    border = BorderStroke(1.dp, accentColor.copy(alpha = if (isPressed) 0.5f else 0.28f)),
+                    color = if (isPressed) resolvedAccent else resolvedAccent.copy(alpha = 0.15f),
+                    border = BorderStroke(1.dp, resolvedAccent.copy(alpha = if (isPressed) 0.5f else 0.28f)),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(29.dp)
@@ -1358,14 +1423,16 @@ fun CampusOpportunityBar(
                             text = actionLabel,
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
-                            color = if (isPressed) Color.White else accentColor,
-                            fontSize = 11.sp
+                            color = if (isPressed) Color.White else resolvedAccent,
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Spacer(modifier = Modifier.width(3.dp))
                         Icon(
                             imageVector = Icons.Default.ArrowForward,
                             contentDescription = "Open $title",
-                            tint = if (isPressed) Color.White else accentColor,
+                            tint = if (isPressed) Color.White else resolvedAccent,
                             modifier = Modifier
                                 .size(12.dp)
                                 .offset(x = arrowOffset)

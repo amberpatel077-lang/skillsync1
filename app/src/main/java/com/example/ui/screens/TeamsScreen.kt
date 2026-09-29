@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
@@ -47,7 +46,6 @@ fun TeamsScreen(
     val members by viewModel.activeTeamMembers.collectAsState()
     val tasks by viewModel.activeTeamTasks.collectAsState()
     val messages by viewModel.activeTeamMessages.collectAsState()
-    val resources by viewModel.activeTeamResources.collectAsState()
     val invitations by viewModel.currentStudentInvitations.collectAsState()
     val sentInvitations by viewModel.sentInvitations.collectAsState()
     val receivedInvitations by viewModel.receivedInvitations.collectAsState()
@@ -55,18 +53,13 @@ fun TeamsScreen(
     val allStudents by viewModel.students.collectAsState()
 
     var activeSubSection by remember { mutableStateOf(0) } // 0: Workspace, 1: Invitations (${invitations.size})
-    var selectedWorkspaceTab by remember { mutableStateOf(0) } // 0: Chat, 1: Tasks, 2: Members, 3: Resources
+    var selectedWorkspaceTab by remember { mutableStateOf(0) } // 0: Chat, 1: Tasks, 2: Members
 
     var chatInputText by remember { mutableStateOf("") }
     var showAddTaskDialog by remember { mutableStateOf(false) }
     var newTaskTitle by remember { mutableStateOf("") }
     var newTaskAssignee by remember { mutableStateOf(currentStudent?.name ?: "Me") }
     var newTaskDue by remember { mutableStateOf("Oct 12") }
-
-    var showAddResourceDialog by remember { mutableStateOf(false) }
-    var newResourceTitle by remember { mutableStateOf("") }
-    var newResourceUrl by remember { mutableStateOf("") }
-    var newResourceType by remember { mutableStateOf("GitHub") }
 
     Column(
         modifier = modifier
@@ -131,11 +124,43 @@ fun TeamsScreen(
                         .padding(24.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.Groups, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("No active team", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Text("Create or join a team from the Explore Opportunity feed.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.size(64.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Default.Groups,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(32.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                        Text("No Active Team Selected", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "Form a new team for a hackathon or join an existing team via invitations.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Button(
+                            onClick = {
+                                viewModel.setExploreSubTab(com.example.viewmodel.ExploreSubTab.OPPORTUNITIES)
+                                viewModel.setTab(com.example.viewmodel.AppTab.EXPLORE)
+                            },
+                            modifier = Modifier.defaultMinSize(minHeight = 44.dp)
+                        ) {
+                            Icon(Icons.Default.Explore, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Explore Opportunities & Form Team", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             } else {
@@ -247,7 +272,7 @@ fun TeamsScreen(
                     }
                 }
 
-                    // Workspace Section Tabs: 💬 Chat, 📋 Tasks, 👥 Members, 📁 Resources
+                    // Workspace Section Tabs: 💬 Chat, 📋 Tasks, 👥 Members
                     item {
                         ScrollableTabRow(
                             selectedTabIndex = selectedWorkspaceTab,
@@ -258,8 +283,7 @@ fun TeamsScreen(
                             listOf(
                                 "💬 Team Chat (${messages.size})",
                                 "📋 Task List (${tasks.count { it.isCompleted }}/${tasks.size})",
-                                "👥 Members (${members.size})",
-                                "📁 Resources (${resources.size})"
+                                "👥 Members (${members.size})"
                             ).forEachIndexed { index, title ->
                                 val isSelected = selectedWorkspaceTab == index
                                 Surface(
@@ -355,7 +379,7 @@ fun TeamsScreen(
                                         fontWeight = FontWeight.Bold
                                     )
                                     TextButton(onClick = { showAddTaskDialog = true }) {
-                                        Text("+ Add Task", color = SkyBlueDark, fontWeight = FontWeight.Bold)
+                                        Text("+ Add Task", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -483,71 +507,6 @@ fun TeamsScreen(
                                 }
                             }
                         }
-
-                        3 -> {
-                            // SHARED RESOURCES & LINKS
-                            item {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = "Workspace Resources & Docs",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    TextButton(onClick = { showAddResourceDialog = true }) {
-                                        Text("+ Add Link", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                                    }
-                                }
-                            }
-
-                            items(resources) { res ->
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 5.dp),
-                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(14.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                        ) {
-                                            val icon = when (res.type) {
-                                                "GitHub" -> Icons.Default.Code
-                                                "Figma" -> Icons.Default.Palette
-                                                else -> Icons.Default.FolderShared
-                                            }
-                                            Surface(
-                                                shape = CircleShape,
-                                                color = MaterialTheme.colorScheme.primaryContainer,
-                                                modifier = Modifier.size(38.dp)
-                                            ) {
-                                                Box(contentAlignment = Alignment.Center) {
-                                                    Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(20.dp))
-                                                }
-                                            }
-                                            Column {
-                                                Text(res.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                                                Text(res.url, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                            }
-                                        }
-                                        Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -597,67 +556,6 @@ fun TeamsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showAddTaskDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-
-    // Add Resource Dialog
-    if (showAddResourceDialog) {
-        AlertDialog(
-            onDismissRequest = { showAddResourceDialog = false },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("📁", fontSize = 20.sp)
-                    Text("Add Workspace Link", fontWeight = FontWeight.Bold)
-                }
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(
-                        value = newResourceTitle,
-                        onValueChange = { newResourceTitle = it },
-                        label = { Text("Resource Title *") },
-                        placeholder = { Text("e.g. GitHub Repository, Figma Design") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = newResourceUrl,
-                        onValueChange = { newResourceUrl = it },
-                        label = { Text("URL Link *") },
-                        placeholder = { Text("https://...") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Text("Type:", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf("GitHub", "Figma", "Drive", "Docs").forEach { type ->
-                            FilterChip(
-                                selected = newResourceType == type,
-                                onClick = { newResourceType = type },
-                                label = { Text(type) }
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        if (newResourceTitle.isNotBlank() && newResourceUrl.isNotBlank()) {
-                            viewModel.addTeamResource(newResourceTitle, newResourceUrl, newResourceType)
-                            newResourceTitle = ""
-                            newResourceUrl = ""
-                            showAddResourceDialog = false
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White)
-                ) {
-                    Text("Add Resource", fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showAddResourceDialog = false }) {
                     Text("Cancel")
                 }
             }

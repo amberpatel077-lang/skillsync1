@@ -1079,6 +1079,7 @@ fun StudentDiscoveryView(
         }
     }
 }
+}
 
 @Composable
 fun ClubRecruitmentView(

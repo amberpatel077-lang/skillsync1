@@ -1,12 +1,24 @@
 package com.example.viewmodel
 
 import android.app.Application
+import android.content.Context
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.data.FirebaseSkillSyncRepository
 import com.example.data.SkillSyncDatabase
 import com.example.data.SkillSyncRepository
 import com.example.data.SmartMatchingEngine
 import com.example.model.*
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.CustomCredential
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import kotlinx.coroutines.tasks.await
 import java.util.UUID
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -55,6 +67,7 @@ enum class ExploreSubTab(val title: String) {
 class SkillSyncViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: SkillSyncRepository
+    val firebaseRepository: FirebaseSkillSyncRepository = FirebaseSkillSyncRepository(application)
 
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -663,6 +676,79 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 )
             }
             onComplete?.invoke(true)
+        }
+    }
+
+    fun signInWithGoogle(context: Context, onComplete: ((Boolean) -> Unit)? = null) {
+        viewModelScope.launch {
+            try {
+                _uiState.update { it.copy(authError = null) }
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId(context.getString(com.example.R.string.default_web_client_id))
+                    .setAutoSelectEnabled(false)
+                    .build()
+
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+
+                val credentialManager = CredentialManager.create(context)
+                val result = credentialManager.getCredential(context = context, request = request)
+                val credential = result.credential
+                if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                    val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                    val idToken = googleIdTokenCredential.idToken
+                    val authCredential = GoogleAuthProvider.getCredential(idToken, null)
+                    val authResult = FirebaseAuth.getInstance().signInWithCredential(authCredential).await()
+                    val user = authResult.user
+                    if (user != null) {
+                        val uid = user.uid
+                        val email = user.email ?: ""
+                        val name = user.displayName ?: "Student"
+                        var student = repository.getStudentByEmail(email)
+                        if (student == null) {
+                            student = StudentProfile(
+                                id = uid,
+                                name = name,
+                                college = "SGSITS Indore",
+                                branch = "CSE",
+                                year = "3rd Year",
+                                email = email,
+                                avatarPhotoUri = user.photoUrl?.toString()
+                            )
+                            repository.registerStudent(student)
+                        }
+                        try {
+                            firebaseRepository.saveStudentProfile(student)
+                        } catch (e: Exception) {
+                            Log.w("SkillSyncVM", "Firestore profile save note: ${e.message}")
+                        }
+                        _uiState.update {
+                            it.copy(
+                                isAuthenticated = true,
+                                currentStudentId = student.id,
+                                authError = null,
+                                userMessage = "Signed in with Google! Welcome, ${student.name} 🎉"
+                            )
+                        }
+                        onComplete?.invoke(true)
+                    } else {
+                        _uiState.update { it.copy(authError = "Google Sign In succeeded but user was null") }
+                        onComplete?.invoke(false)
+                    }
+                } else {
+                    _uiState.update { it.copy(authError = "Invalid credential type returned") }
+                    onComplete?.invoke(false)
+                }
+            } catch (e: GetCredentialCancellationException) {
+                // User cancelled flow
+                onComplete?.invoke(false)
+            } catch (e: Exception) {
+                Log.e("SkillSyncVM", "Google Sign In error", e)
+                _uiState.update { it.copy(authError = "Google Sign In: ${e.localizedMessage ?: "Sign in failed"}") }
+                onComplete?.invoke(false)
+            }
         }
     }
 

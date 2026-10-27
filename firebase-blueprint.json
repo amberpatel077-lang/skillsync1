@@ -1,0 +1,171 @@
+{
+  "entities": {
+    "StudentProfile": {
+      "title": "StudentProfile",
+      "description": "Student profile data with skills, branch, year and collaboration preferences.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Unique user identifier from Firebase Auth" },
+        "name": { "type": "string", "description": "Student display name" },
+        "email": { "type": "string", "description": "Student email address" },
+        "branch": { "type": "string", "description": "Academic branch (CSE, IT, ECE, etc.)" },
+        "year": { "type": "string", "description": "Academic year (1st, 2nd, 3rd, 4th Year)" },
+        "bio": { "type": "string", "description": "Short bio or tagline" },
+        "avatarUrl": { "type": "string", "description": "Avatar URL or placeholder" },
+        "skills": { "type": "array", "description": "List of skills with proficiency levels" },
+        "availability": { "type": "string", "description": "Weekly availability summary" },
+        "lookingFor": { "type": "string", "description": "Collaboration goal" },
+        "updatedAt": { "type": "string", "description": "ISO timestamp of last profile update" }
+      },
+      "required": ["userId", "name", "email", "branch", "year"]
+    },
+    "Team": {
+      "title": "Team",
+      "description": "Project or hackathon squad created by students.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique team ID" },
+        "name": { "type": "string", "description": "Team or project title" },
+        "description": { "type": "string", "description": "Team project vision" },
+        "leaderId": { "type": "string", "description": "User ID of team founder/leader" },
+        "memberIds": { "type": "array", "description": "List of user IDs of confirmed team members" },
+        "requiredSkills": { "type": "array", "description": "Desired skills sought for the team" },
+        "targetOpportunityId": { "type": "string", "description": "Opportunity ID the team is targeting" },
+        "status": { "type": "string", "description": "Team status: RECRUITING, FULL, ARCHIVED" },
+        "createdAt": { "type": "string", "description": "ISO timestamp when created" }
+      },
+      "required": ["id", "name", "leaderId", "memberIds"]
+    },
+    "TeamMessage": {
+      "title": "TeamMessage",
+      "description": "Real-time squad communication message.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique message ID" },
+        "teamId": { "type": "string", "description": "Team ID the message belongs to" },
+        "senderId": { "type": "string", "description": "User ID of message author" },
+        "senderName": { "type": "string", "description": "Display name of message author" },
+        "content": { "type": "string", "description": "Text message body" },
+        "timestamp": { "type": "number", "description": "Epoch timestamp in milliseconds" }
+      },
+      "required": ["id", "teamId", "senderId", "content", "timestamp"]
+    },
+    "TeamTask": {
+      "title": "TeamTask",
+      "description": "Action item or sprint task within a squad.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique task ID" },
+        "teamId": { "type": "string", "description": "Team ID" },
+        "title": { "type": "string", "description": "Task description" },
+        "assigneeId": { "type": "string", "description": "User ID of assigned member" },
+        "isCompleted": { "type": "boolean", "description": "Completion flag" },
+        "dueDate": { "type": "string", "description": "Target completion date" }
+      },
+      "required": ["id", "teamId", "title", "isCompleted"]
+    },
+    "Opportunity": {
+      "title": "Opportunity",
+      "description": "Campus contest, hackathon, lab research, or recruitment drive.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique opportunity ID" },
+        "title": { "type": "string", "description": "Title of the opportunity" },
+        "category": { "type": "string", "description": "HACKATHON, CLUB, VOLUNTEERING, RESEARCH" },
+        "organizer": { "type": "string", "description": "Club or entity organizing the drive" },
+        "deadline": { "type": "string", "description": "Application deadline string" },
+        "date": { "type": "string", "description": "Event date string" },
+        "mode": { "type": "string", "description": "ONLINE, OFFLINE, HYBRID" },
+        "location": { "type": "string", "description": "Campus venue or online link" },
+        "teamSizeMin": { "type": "number", "description": "Minimum squad size" },
+        "teamSizeMax": { "type": "number", "description": "Maximum squad size" },
+        "requiredSkills": { "type": "array", "description": "Relevant domain skills" },
+        "description": { "type": "string", "description": "Full details" },
+        "creatorId": { "type": "string", "description": "User ID of poster" },
+        "prizes": { "type": "string", "description": "Prizes, duty leave or perks" }
+      },
+      "required": ["id", "title", "category", "organizer", "description"]
+    },
+    "ClubApplication": {
+      "title": "ClubApplication",
+      "description": "Student recruitment application for college clubs and chapters.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique application ID" },
+        "applicantId": { "type": "string", "description": "User ID of applicant" },
+        "clubName": { "type": "string", "description": "Name of club applied to" },
+        "roleApplied": { "type": "string", "description": "Role applied for" },
+        "sop": { "type": "string", "description": "Statement of purpose" },
+        "status": { "type": "string", "description": "PENDING, UNDER_REVIEW, ACCEPTED, REJECTED" },
+        "appliedAt": { "type": "string", "description": "Date applied" }
+      },
+      "required": ["id", "applicantId", "clubName", "roleApplied", "status"]
+    },
+    "VolunteerRegistration": {
+      "title": "VolunteerRegistration",
+      "description": "Student registration for campus volunteering and social service drives.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique registration ID" },
+        "volunteerId": { "type": "string", "description": "User ID of student" },
+        "opportunityId": { "type": "string", "description": "Referenced opportunity ID" },
+        "eventTitle": { "type": "string", "description": "Volunteering initiative title" },
+        "preferredRole": { "type": "string", "description": "Assigned duty" },
+        "hoursAvailable": { "type": "string", "description": "Committed hours" },
+        "motivation": { "type": "string", "description": "Motivation note" },
+        "status": { "type": "string", "description": "REGISTERED, COMPLETED" },
+        "registeredAt": { "type": "string", "description": "Date registered" }
+      },
+      "required": ["id", "volunteerId", "eventTitle", "status"]
+    },
+    "TeamInvitation": {
+      "title": "TeamInvitation",
+      "description": "Invitation sent to a peer to join a squad.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique invitation ID" },
+        "teamId": { "type": "string", "description": "Team ID" },
+        "senderId": { "type": "string", "description": "User ID of sender" },
+        "recipientId": { "type": "string", "description": "User ID of candidate" },
+        "note": { "type": "string", "description": "Personalized invitation note" },
+        "status": { "type": "string", "description": "PENDING, ACCEPTED, DECLINED" },
+        "sentAt": { "type": "string", "description": "Date invitation was sent" }
+      },
+      "required": ["id", "teamId", "senderId", "recipientId", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "StudentProfile",
+      "description": "User profiles indexed by Firebase Auth UID."
+    },
+    "/teams/{teamId}": {
+      "schema": "Team",
+      "description": "Student project and hackathon teams."
+    },
+    "/teams/{teamId}/messages/{messageId}": {
+      "schema": "TeamMessage",
+      "description": "Chat messages within a team."
+    },
+    "/teams/{teamId}/tasks/{taskId}": {
+      "schema": "TeamTask",
+      "description": "Sprint tasks within a team."
+    },
+    "/opportunities/{opportunityId}": {
+      "schema": "Opportunity",
+      "description": "Campus opportunities, contests, and drives."
+    },
+    "/club_applications/{applicationId}": {
+      "schema": "ClubApplication",
+      "description": "Applications submitted to clubs."
+    },
+    "/volunteer_registrations/{registrationId}": {
+      "schema": "VolunteerRegistration",
+      "description": "Volunteering registrations."
+    },
+    "/invitations/{invitationId}": {
+      "schema": "TeamInvitation",
+      "description": "Team invitations sent to students."
+    }
+  }
+}

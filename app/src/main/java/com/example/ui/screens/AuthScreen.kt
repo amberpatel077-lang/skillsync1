@@ -606,6 +606,54 @@ fun AuthScreen(
                                 }
                             }
 
+                            // Google Sign In Divider
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                HorizontalDivider(
+                                    modifier = Modifier.weight(1f),
+                                    color = MaterialTheme.colorScheme.outlineVariant
+                                )
+                                Text(
+                                    text = "  OR  ",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                HorizontalDivider(
+                                    modifier = Modifier.weight(1f),
+                                    color = MaterialTheme.colorScheme.outlineVariant
+                                )
+                            }
+
+                            // Sign in with Google (Firebase Auth + CredentialManager)
+                            OutlinedButton(
+                                onClick = {
+                                    focusManager.clearFocus()
+                                    viewModel.signInWithGoogle(context)
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp)
+                                    .testTag("btn_google_signin"),
+                                shape = RoundedCornerShape(12.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Text("G", fontWeight = FontWeight.Black, fontSize = 20.sp, color = BrandCyan)
+                                    Text(
+                                        text = "Sign in with Google",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                            }
+
                             // Hint regarding demo password
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
@@ -1170,6 +1218,33 @@ fun AuthScreen(
                                         text = "Create Account & Log In",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            // Sign up with Google
+                            Spacer(modifier = Modifier.height(10.dp))
+                            OutlinedButton(
+                                onClick = {
+                                    focusManager.clearFocus()
+                                    viewModel.signInWithGoogle(context)
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp)
+                                    .testTag("btn_google_signup"),
+                                shape = RoundedCornerShape(12.dp),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Text("G", fontWeight = FontWeight.Black, fontSize = 20.sp, color = BrandCyan)
+                                    Text(
+                                        text = "Sign up with Google",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold
                                     )
                                 }
                             }

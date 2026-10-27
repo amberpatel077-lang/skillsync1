@@ -20,11 +20,7 @@ class FirebaseSkillSyncRepository(
     val auth: FirebaseAuth = FirebaseAuth.getInstance()
 ) {
     // Secondary constructor to safely resolve the named database ID
-    constructor(context: Context) : this(
-        FirebaseFirestore.getInstance(
-            context.applicationContext.getString(R.string.firestore_database_id)
-        )
-    )
+    constructor(context: Context) : this(resolveFirestore(context))
 
     companion object {
         private const val TAG = "FirebaseRepository"
@@ -36,6 +32,16 @@ class FirebaseSkillSyncRepository(
         const val COLLECTION_INVITATIONS = "invitations"
         const val SUB_COLLECTION_MESSAGES = "messages"
         const val SUB_COLLECTION_TASKS = "tasks"
+
+        private fun resolveFirestore(context: Context): FirebaseFirestore {
+            val appContext = context.applicationContext ?: context
+            if (com.google.firebase.FirebaseApp.getApps(appContext).isEmpty()) {
+                com.google.firebase.FirebaseApp.initializeApp(appContext)
+            }
+            return FirebaseFirestore.getInstance(
+                appContext.getString(R.string.firestore_database_id)
+            )
+        }
     }
 
     // ----------------------------------------------------

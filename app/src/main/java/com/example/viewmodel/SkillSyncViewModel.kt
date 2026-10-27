@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 data class UiState(
+    val isSplashVisible: Boolean = true,
     val isAuthenticated: Boolean = false,
     val authError: String? = null,
     val authSuccessMessage: String? = null,
@@ -67,7 +68,9 @@ enum class ExploreSubTab(val title: String) {
 class SkillSyncViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: SkillSyncRepository
-    val firebaseRepository: FirebaseSkillSyncRepository = FirebaseSkillSyncRepository(application)
+    val firebaseRepository: FirebaseSkillSyncRepository by lazy {
+        FirebaseSkillSyncRepository(application)
+    }
 
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -979,5 +982,9 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 userMessage = "Survey submitted successfully! Your campus voice has been recorded. 🌟"
             )
         }
+    }
+
+    fun dismissSplash() {
+        _uiState.update { it.copy(isSplashVisible = false) }
     }
 }

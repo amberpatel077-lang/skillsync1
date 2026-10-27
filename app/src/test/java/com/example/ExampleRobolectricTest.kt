@@ -41,4 +41,14 @@ class ExampleRobolectricTest {
     viewModel.logout()
     assertEquals(false, viewModel.uiState.value.isAuthenticated)
   }
+
+  @Test
+  fun `verify splash screen initial visibility and dismissal`() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val viewModel = SkillSyncViewModel(context as android.app.Application)
+
+    assertEquals(true, viewModel.uiState.value.isSplashVisible)
+    viewModel.dismissSplash()
+    assertEquals(false, viewModel.uiState.value.isSplashVisible)
+  }
 }

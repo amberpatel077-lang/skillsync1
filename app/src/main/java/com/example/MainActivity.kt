@@ -5,6 +5,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -14,11 +20,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.screens.*
-import com.example.ui.theme.DarkBg
 import com.example.ui.theme.MyApplicationTheme
 import com.example.viewmodel.AppTab
 import com.example.viewmodel.SkillSyncViewModel
+
+private enum class RootScreenState {
+    SPLASH,
+    AUTH,
+    MAIN
+}
 
 class MainActivity : ComponentActivity() {
 
@@ -29,7 +41,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val uiState by viewModel.uiState.collectAsState()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             val snackbarHostState = remember { SnackbarHostState() }
 
             MyApplicationTheme(darkTheme = uiState.isDarkTheme) {
@@ -41,19 +53,42 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                if (!uiState.isAuthenticated) {
-                    AuthScreen(viewModel = viewModel)
-                } else {
-                    Scaffold(
-                        modifier = Modifier.fillMaxSize(),
-                        containerColor = MaterialTheme.colorScheme.background,
-                        snackbarHost = { SnackbarHost(snackbarHostState) },
-                        bottomBar = {
-                            NavigationBar(
-                                modifier = Modifier.testTag("bottom_nav_bar"),
-                                containerColor = MaterialTheme.colorScheme.surface,
-                                tonalElevation = 8.dp
-                            ) {
+                val rootState = when {
+                    uiState.isSplashVisible -> RootScreenState.SPLASH
+                    !uiState.isAuthenticated -> RootScreenState.AUTH
+                    else -> RootScreenState.MAIN
+                }
+
+                AnimatedContent(
+                    targetState = rootState,
+                    transitionSpec = {
+                        (fadeIn(animationSpec = tween(420)) +
+                            scaleIn(initialScale = 0.98f, animationSpec = tween(420)))
+                            .togetherWith(fadeOut(animationSpec = tween(300)))
+                    },
+                    label = "root_screen_transition"
+                ) { screen ->
+                    when (screen) {
+                        RootScreenState.SPLASH -> {
+                            SplashScreen(
+                                isDarkTheme = uiState.isDarkTheme,
+                                onSplashFinished = { viewModel.dismissSplash() }
+                            )
+                        }
+                        RootScreenState.AUTH -> {
+                            AuthScreen(viewModel = viewModel)
+                        }
+                        RootScreenState.MAIN -> {
+                            Scaffold(
+                                modifier = Modifier.fillMaxSize(),
+                                containerColor = MaterialTheme.colorScheme.background,
+                                snackbarHost = { SnackbarHost(snackbarHostState) },
+                                bottomBar = {
+                                    NavigationBar(
+                                        modifier = Modifier.testTag("bottom_nav_bar"),
+                                        containerColor = MaterialTheme.colorScheme.surface,
+                                        tonalElevation = 8.dp
+                                    ) {
                                 val bottomNavTabs = listOf(
                                     AppTab.HOME,
                                     AppTab.TEAMS,
@@ -114,14 +149,16 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    // Smart Teammates Matching Sheet
-                    uiState.findTeammatesOppId?.let { oppId ->
-                        FindTeammatesSheet(
-                            opportunityId = oppId,
-                            viewModel = viewModel,
-                            onDismiss = { viewModel.closeFindTeammates() }
-                        )
+                        // Smart Teammates Matching Sheet
+                        uiState.findTeammatesOppId?.let { oppId ->
+                            FindTeammatesSheet(
+                                opportunityId = oppId,
+                                viewModel = viewModel,
+                                onDismiss = { viewModel.closeFindTeammates() }
+                            )
+                        }
                     }
+                }
                 }
             }
         }

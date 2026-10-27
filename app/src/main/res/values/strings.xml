@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">SkillSync</string>
+    <string name="splash_logo_content_desc">SkillSync official infinity sync logo</string>
+    <string name="splash_motto_connect">CONNECT</string>
+    <string name="splash_motto_collaborate">COLLABORATE</string>
+    <string name="splash_motto_grow">GROW</string>
+    <string name="splash_tagline">Turn Interests Into Impact</string>
+    <string name="splash_subtitle">Student Opportunity &amp; Skill-Based Team Matching Platform</string>
+    <string name="splash_pillar_hackathons">Hackathons</string>
+    <string name="splash_pillar_smart_teams">Smart Teams</string>
+    <string name="splash_pillar_opportunities">Opportunities</string>
+    <string name="splash_campus_badge">Team SkillSync  •  Campus Hub</string>
+    <string name="splash_sync_status">Syncing campus opportunities &amp; skill graph…</string>
+    <string name="splash_skip">Skip</string>
+    <string name="splash_skip_content_desc">Skip splash screen and continue to SkillSync</string>
 </resources>

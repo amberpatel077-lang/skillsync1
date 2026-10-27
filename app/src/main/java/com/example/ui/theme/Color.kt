@@ -21,6 +21,12 @@ val BrandAmber = Color(0xFFD97706)          // Amber 600
 val BrandRose = Color(0xFFE11D48)           // Rose 600
 val BrandPink = SkyBlueLight                // Sky 400
 
+// Splash Screen Accent Tokens
+val SplashLogoSurfaceStart = Color(0xFFEEF2FF)  // Soft Indigo 50 tint
+val SplashLogoSurfaceEnd = Color(0xFFE0F2FE)    // Soft Sky 100 tint
+val SplashOrbitIndigo = Color(0xFF4F46E5)       // Indigo 600 sync node accent
+val SplashOrbitViolet = Color(0xFF8B5CF6)       // Violet 500 synergy spark accent
+
 // Dark/Light Theme Surfaces (Sky Blue Theme)
 val DarkThemeBg = Color(0xFF0A0F1D)         // Deep dark night background
 val DarkThemeSurface = Color(0xFF111827)    // Elevated card surface (Slate 900)

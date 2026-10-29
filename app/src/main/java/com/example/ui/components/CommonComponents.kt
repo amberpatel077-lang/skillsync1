@@ -129,7 +129,7 @@ fun MatchScoreBadge(
 
 @Composable
 fun VerificationBadge(
-    label: String = "SGSITS Verified",
+    label: String = "Campus Verified",
     modifier: Modifier = Modifier
 ) {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -169,7 +169,8 @@ fun OpportunityCard(
     currentStudent: StudentProfile?,
     onCardClick: () -> Unit,
     onFindTeammatesClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isRegistered: Boolean = false
 ) {
     Card(
         modifier = modifier
@@ -226,7 +227,30 @@ fun OpportunityCard(
                     }
                 }
 
-                MatchScoreBadge(score = matchScore)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    if (isRegistered) {
+                        val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+                        val sentColors = SemanticStatus.resolve(StatusType.SUCCESS, isDark)
+                        Surface(
+                            color = sentColors.background,
+                            shape = RoundedCornerShape(20.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, sentColors.border),
+                            modifier = Modifier.testTag("opp_card_sent_${opportunity.id}")
+                        ) {
+                            Text(
+                                text = androidx.compose.ui.res.stringResource(com.example.R.string.status_sent_badge),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = sentColors.text,
+                                fontWeight = FontWeight.ExtraBold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
+                    MatchScoreBadge(score = matchScore)
+                }
             }
 
             Spacer(modifier = Modifier.height(10.dp))

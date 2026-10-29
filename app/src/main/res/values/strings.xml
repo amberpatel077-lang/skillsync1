@@ -13,4 +13,26 @@
     <string name="splash_sync_status">Syncing campus opportunities &amp; skill graph…</string>
     <string name="splash_skip">Skip</string>
     <string name="splash_skip_content_desc">Skip splash screen and continue to SkillSync</string>
+    <string name="registration_sent_title">Registration Sent</string>
+    <string name="registration_not_sent_title">Registration Not Sent</string>
+    <string name="application_sent_title">Application Sent</string>
+    <string name="application_not_sent_title">Application Not Sent</string>
+    <string name="team_registration_sent_title">Team Registration Sent</string>
+    <string name="status_sent_badge">✓ Sent</string>
+    <string name="status_not_sent_badge">✕ Not Sent</string>
+    <string name="status_sending_label">Sending…</string>
+    <string name="status_synced_cloud">Synced to cloud</string>
+    <string name="status_saved_campus_hub">Saved to Campus Hub</string>
+    <string name="btn_done">Done</string>
+    <string name="btn_retry_send">Retry</string>
+    <string name="registration_sent_icon_desc">Registration sent</string>
+    <string name="registration_not_sent_icon_desc">Registration not sent</string>
+    <string name="dismiss_status_desc">Dismiss status notification</string>
+    <string name="demo_single_account_title">Demo Account Access</string>
+    <string name="demo_single_account_subtitle">Instant 1-tap preview with official demo student</string>
+    <string name="demo_single_account_cta">Launch Demo</string>
+    <string name="open_all_colleges_banner">Open to Every College • Connect across all campuses</string>
+    <string name="college_field_label">College / University *</string>
+    <string name="college_field_placeholder">Enter any college or university name</string>
+    <string name="verified_academic_domain">Verified academic email domain detected!</string>
 </resources>

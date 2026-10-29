@@ -81,7 +81,6 @@ fun ProfileScreen(
     var newProjRole by remember { mutableStateOf("") }
 
     var showTrustSafetyDialog by remember { mutableStateOf(false) }
-    var showSwitchPersonaDialog by remember { mutableStateOf(false) }
 
     var showEditProfileDialog by remember { mutableStateOf(false) }
     var editName by remember(student) { mutableStateOf(student.name) }
@@ -190,7 +189,7 @@ fun ProfileScreen(
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold
                                 )
-                                VerificationBadge(label = "SGSITS Verified")
+                                VerificationBadge(label = "Campus Verified")
                             }
                             Text(
                                 text = "${student.college}",
@@ -700,75 +699,24 @@ fun ProfileScreen(
                     )
 
                     OutlinedButton(
-                        onClick = { showSwitchPersonaDialog = true },
+                        onClick = { viewModel.logout() },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .testTag("btn_profile_switch_persona"),
+                            .defaultMinSize(minHeight = 48.dp)
+                            .testTag("btn_profile_logout"),
                         shape = RoundedCornerShape(10.dp),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = SkyBluePrimary
+                            contentColor = MaterialTheme.colorScheme.error
                         ),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, SkyBluePrimary.copy(alpha = 0.5f))
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
                     ) {
-                        Icon(Icons.Default.SwitchAccount, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.Logout, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Switch Active Student Profile", fontWeight = FontWeight.Bold)
+                        Text("Sign Out", fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
-    }
-
-    // Switch Student Profile Dialog
-    if (showSwitchPersonaDialog) {
-        val allStudents by viewModel.students.collectAsState()
-        AlertDialog(
-            onDismissRequest = { showSwitchPersonaDialog = false },
-            title = {
-                Text("Select Student Profile", fontWeight = FontWeight.Bold)
-            },
-            text = {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    items(allStudents) { s ->
-                        val isCurrent = s.id == student.id
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    viewModel.switchStudent(s.id)
-                                    showSwitchPersonaDialog = false
-                                },
-                            shape = RoundedCornerShape(10.dp),
-                            color = if (isCurrent) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                            border = if (isCurrent) androidx.compose.foundation.BorderStroke(1.dp, SkyBluePrimary) else null
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                StudentAvatar(student = s, size = 38.dp)
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(s.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
-                                    Text("${s.branch} • ${s.college}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                                if (isCurrent) {
-                                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = SkyBluePrimary, modifier = Modifier.size(18.dp))
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showSwitchPersonaDialog = false }) {
-                    Text("Close")
-                }
-            }
-        )
     }
 
     // Photo Action Options Dialog
@@ -1033,7 +981,7 @@ fun ProfileScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text("• Verified College Email: ${student.email}", style = MaterialTheme.typography.bodySmall)
                     Text("• Verified Institution: ${student.college}", style = MaterialTheme.typography.bodySmall)
-                    Text("• Branch Verification: ${student.branch} (SGSITS Reg. Confirmed)", style = MaterialTheme.typography.bodySmall)
+                    Text("• Academic Verification: ${student.branch} (${student.college})", style = MaterialTheme.typography.bodySmall)
                     Text("• Profile Visibility: Public to registered college students only", style = MaterialTheme.typography.bodySmall)
                     Text("• Privacy Guarantee: Contact details are only shared after you accept a team invitation.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -1107,16 +1055,16 @@ fun ProfileScreen(
                     item {
                         OutlinedTextField(
                             value = editCollege,
-                            onValueChange = { /* Fixed to SGSITS Indore during campus phase */ },
-                            readOnly = true,
+                            onValueChange = { editCollege = it },
                             label = { Text("College / University *") },
-                            supportingText = {
-                                Text("Campus Phase: Exclusively active for SGSITS Indore")
+                            placeholder = { Text("Enter any college or university") },
+                            leadingIcon = {
+                                Icon(Icons.Default.Apartment, contentDescription = null, modifier = Modifier.size(18.dp))
                             },
-                            trailingIcon = {
-                                Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
-                            },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("input_edit_college"),
+                            singleLine = true
                         )
                     }
                     item {

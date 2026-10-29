@@ -55,12 +55,11 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val currentStudent by viewModel.currentStudent.collectAsState()
-    val allStudents by viewModel.students.collectAsState()
     val activeTeam by viewModel.activeTeam.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
-    var showStudentSwitcher by remember { mutableStateOf(false) }
     var showResearchSidePanel by remember { mutableStateOf(false) }
     var showAllOpportunities by remember { mutableStateOf(false) }
+    var showProfileDetails by remember { mutableStateOf(false) }
 
     BackHandler(enabled = showResearchSidePanel) {
         showResearchSidePanel = false
@@ -197,7 +196,7 @@ fun HomeScreen(
                             border = androidx.compose.foundation.BorderStroke(0.8.dp, SemanticStatus.InfoBorder)
                         ) {
                             Text(
-                                text = "SGSITS SMART MATCH",
+                                text = "CAMPUS SMART MATCH",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = SemanticStatus.Info,
                                 fontWeight = FontWeight.Bold,
@@ -265,7 +264,7 @@ fun HomeScreen(
                                 modifier = Modifier.clickable { viewModel.setTab(AppTab.PROFILE) }
                             )
 
-                            Column {
+                            Column(modifier = Modifier.weight(1f, fill = false)) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -274,14 +273,18 @@ fun HomeScreen(
                                         text = currentStudent?.name ?: "Student Profile",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                     VerificationBadge(label = "Verified")
                                 }
                                 Text(
-                                    text = "${currentStudent?.branch ?: "CSE"} • ${currentStudent?.year ?: "2nd Year"}",
+                                    text = "${currentStudent?.college ?: "Campus"} • ${currentStudent?.branch ?: "CSE"} • ${currentStudent?.year ?: "2nd Year"}",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -290,20 +293,18 @@ fun HomeScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            // Switch Profile Button
-                            OutlinedButton(
-                                onClick = { showStudentSwitcher = true },
-                                shape = RoundedCornerShape(8.dp),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                                modifier = Modifier.testTag("btn_switch_student")
+                            IconButton(
+                                onClick = { showProfileDetails = !showProfileDetails },
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .testTag("btn_toggle_home_profile_details")
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.SwitchAccount,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(14.dp)
+                                    imageVector = if (showProfileDetails) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                    contentDescription = if (showProfileDetails) "Hide profile details" else "Show profile details",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
                                 )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Switch", fontSize = 11.sp)
                             }
 
                             // Logout Button
@@ -323,57 +324,61 @@ fun HomeScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    AnimatedVisibility(visible = showProfileDetails) {
+                        Column {
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                    // My Visible Skills
-                    Text(
-                        text = "My Skills & Verified Levels:",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                            // My Visible Skills
+                            Text(
+                                text = "My Skills & Verified Levels:",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.SemiBold
+                            )
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
 
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        items(currentStudent?.skills ?: emptyList()) { skill ->
-                            SkillBadge(skill = skill, isHighlighted = true)
-                        }
-                    }
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items(currentStudent?.skills ?: emptyList()) { skill ->
+                                    SkillBadge(skill = skill, isHighlighted = true)
+                                }
+                            }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
 
-                    // Availability & Status Pill
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = SemanticStatus.SuccessBg,
-                            border = androidx.compose.foundation.BorderStroke(1.dp, SemanticStatus.SuccessBorder)
-                        ) {
+                            // Availability & Status Pill
                             Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(6.dp)
-                                        .clip(CircleShape)
-                                        .background(SemanticStatus.Success)
-                                )
-                                Text(
-                                    text = "Available: ${currentStudent?.availability?.summaryText() ?: "Active"}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = SemanticStatus.Success,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 11.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = SemanticStatus.SuccessBg,
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, SemanticStatus.SuccessBorder)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(6.dp)
+                                                .clip(CircleShape)
+                                                .background(SemanticStatus.Success)
+                                        )
+                                        Text(
+                                            text = "Available: ${currentStudent?.availability?.summaryText() ?: "Active"}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = SemanticStatus.Success,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 11.sp,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -463,7 +468,7 @@ fun HomeScreen(
                     ) {
                         CampusOpportunityBar(
                             title = "Clubs & Chapters",
-                            badgeText = "SGSITS Inductions",
+                            badgeText = "All Campuses",
                             liveStatusText = "Active",
                             statusType = StatusType.SUCCESS,
                             description = "Join ACM, GDSC, Club inductions & core roles",
@@ -526,7 +531,7 @@ fun HomeScreen(
                             badgeText = "Skill Matching",
                             liveStatusText = "Instant",
                             statusType = StatusType.SUCCESS,
-                            description = "Connect with SGSITS peers for hackathon squads",
+                            description = "Connect with peers across colleges for hackathon squads",
                             emoji = "🔍",
                             accentColor = SkyBlueDark,
                             actionLabel = "Connect",
@@ -731,76 +736,6 @@ fun HomeScreen(
         }
     }
 
-    // Student Switcher Dialog
-    if (showStudentSwitcher) {
-        AlertDialog(
-            onDismissRequest = { showStudentSwitcher = false },
-            title = {
-                Text(
-                    text = "Switch Student Persona",
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = "Select a student to see how matching scores and recommendations dynamically change for different skill sets:",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    allStudents.forEach { student ->
-                        val isSelected = student.id == currentStudent?.id
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
-                                .clickable {
-                                    viewModel.switchStudent(student.id)
-                                    showStudentSwitcher = false
-                                },
-                            color = if (isSelected) SkyBluePrimary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant,
-                            border = if (isSelected) androidx.compose.foundation.BorderStroke(1.dp, SkyBluePrimary) else null
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column {
-                                    Text(
-                                        text = student.name,
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = "${student.branch} • ${student.skills.take(2).joinToString(", ") { it.name }}",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                if (isSelected) {
-                                    Icon(
-                                        imageVector = Icons.Default.CheckCircle,
-                                        contentDescription = null,
-                                        tint = SkyBluePrimary,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showStudentSwitcher = false }) {
-                    Text("Close")
-                }
-            }
-        )
-    }
-
     // Modal Scrim for Side Navigation Panel
     if (showResearchSidePanel) {
         Box(
@@ -952,7 +887,7 @@ fun DesignThinkingResearchSidePanel(
                                 modifier = Modifier.size(16.dp)
                             )
                             Text(
-                                text = "SGSITS Indore Campus Study",
+                                text = "Multi-Campus Student Study",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
@@ -1265,181 +1200,100 @@ fun CampusOpportunityBar(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(11.dp),
+                .padding(12.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Column {
-                // Top Row: Leading Emoji Container + Live Pulsing Activity Beacon
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+            // Top Row: Leading Emoji Container + Subtle Live Status Pill
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = resolvedAccent.copy(alpha = if (isPressed) 0.22f else 0.12f),
+                    border = BorderStroke(1.dp, resolvedAccent.copy(alpha = if (isPressed) 0.45f else 0.25f)),
+                    modifier = Modifier.size(36.dp)
                 ) {
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = resolvedAccent.copy(alpha = if (isPressed) 0.22f else 0.12f),
-                        border = BorderStroke(1.dp, resolvedAccent.copy(alpha = if (isPressed) 0.45f else 0.25f)),
-                        modifier = Modifier.size(38.dp)
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = emoji,
-                                fontSize = 20.sp
-                            )
-                        }
-                    }
-
-                    if (liveStatusText != null) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(3.dp),
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(statusColors.background)
-                                .padding(horizontal = 6.dp, vertical = 2.5.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(5.dp)
-                                    .clip(CircleShape)
-                                    .background(statusColors.text.copy(alpha = pulseAlpha))
-                            )
-                            Text(
-                                text = liveStatusText,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = statusColors.text,
-                                fontSize = 9.5.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                maxLines = 1
-                            )
-                        }
+                        Text(
+                            text = emoji,
+                            fontSize = 18.sp
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(7.dp))
+                if (liveStatusText != null) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(3.dp),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(statusColors.background)
+                            .padding(horizontal = 6.dp, vertical = 2.5.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(5.dp)
+                                .clip(CircleShape)
+                                .background(statusColors.text.copy(alpha = pulseAlpha))
+                        )
+                        Text(
+                            text = liveStatusText,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = statusColors.text,
+                            fontSize = 9.5.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
 
-                // Badge Tag: Standardized 🔵 Informational
-                Surface(
-                    shape = RoundedCornerShape(5.dp),
-                    color = badgeColors.background,
-                    border = BorderStroke(0.8.dp, badgeColors.border)
-                ) {
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Clean Title + Concise 1-Line Subtitle + Subtle Trailing Arrow
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = badgeText,
-                        style = MaterialTheme.typography.labelSmall,
+                        text = title,
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
-                        color = badgeColors.text,
-                        fontSize = 9.5.sp,
-                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 13.5.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 11.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.width(4.dp))
 
-                // Title
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 13.5.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(3.dp))
-
-                // Description
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 10.5.sp,
-                    lineHeight = 14.5.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                // Quick Tags (clickable pills) - small-screen overflow protected
-                if (quickTags.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        quickTags.take(2).forEach { tag ->
-                            Surface(
-                                onClick = {
-                                    if (onTagClick != null) {
-                                        onTagClick(tag)
-                                    } else {
-                                        onClick()
-                                    }
-                                },
-                                shape = RoundedCornerShape(5.dp),
-                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                border = BorderStroke(0.6.dp, MaterialTheme.colorScheme.outlineVariant),
-                                modifier = Modifier.weight(1f, fill = false)
-                            ) {
-                                Text(
-                                    text = "#$tag",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 9.5.sp,
-                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            Column {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Dynamic Action CTA Button
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = if (isPressed) resolvedAccent else resolvedAccent.copy(alpha = 0.15f),
-                    border = BorderStroke(1.dp, resolvedAccent.copy(alpha = if (isPressed) 0.5f else 0.28f)),
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Open $title",
+                    tint = resolvedAccent,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(29.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.padding(horizontal = 6.dp)
-                    ) {
-                        Text(
-                            text = actionLabel,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isPressed) Color.White else resolvedAccent,
-                            fontSize = 11.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(modifier = Modifier.width(3.dp))
-                        Icon(
-                            imageVector = Icons.Default.ArrowForward,
-                            contentDescription = "Open $title",
-                            tint = if (isPressed) Color.White else resolvedAccent,
-                            modifier = Modifier
-                                .size(12.dp)
-                                .offset(x = arrowOffset)
-                        )
-                    }
-                }
+                        .size(14.dp)
+                        .offset(x = arrowOffset)
+                )
             }
         }
     }

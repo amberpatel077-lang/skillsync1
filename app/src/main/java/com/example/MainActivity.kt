@@ -137,6 +137,12 @@ class MainActivity : ComponentActivity() {
                                 AppTab.SURVEY -> SurveyScreen(viewModel = viewModel)
                                 AppTab.PROFILE -> ProfileScreen(viewModel = viewModel)
                             }
+
+                            com.example.ui.components.RegistrationStatusBanner(
+                                status = uiState.lastRegistrationStatus,
+                                onDismiss = { viewModel.clearRegistrationStatus() },
+                                modifier = Modifier.align(androidx.compose.ui.Alignment.TopCenter)
+                            )
                         }
                     }
 

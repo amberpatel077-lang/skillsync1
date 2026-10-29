@@ -199,9 +199,11 @@ fun FindTeammatesSheet(
                                             VerificationBadge("Verified")
                                         }
                                         Text(
-                                            text = "${candidate.branch} • ${candidate.year}",
+                                            text = "${candidate.college} • ${candidate.branch} • ${candidate.year}",
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                         )
                                     }
                                 }
@@ -370,7 +372,7 @@ fun FindTeammatesSheet(
             title = {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(candidate.name, fontWeight = FontWeight.Bold)
-                    VerificationBadge("SGSITS")
+                    VerificationBadge("Verified")
                 }
             },
             text = {

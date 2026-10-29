@@ -39,9 +39,23 @@ fun OpportunityDetailDialog(
     val opportunities by viewModel.opportunities.collectAsState()
     val opp = opportunities.find { it.id == opportunityId } ?: return
     val currentStudent by viewModel.currentStudent.collectAsState()
+    val clubApplications by viewModel.clubApplications.collectAsState()
+    val volunteerRegistrations by viewModel.volunteerRegistrations.collectAsState()
+    val teams by viewModel.teams.collectAsState()
+
+    val existingClubApp = clubApplications.find {
+        it.clubOpportunityId == opp.id && (currentStudent == null || it.studentId == currentStudent?.id)
+    }
+    val existingVolReg = volunteerRegistrations.find {
+        it.volunteerOpportunityId == opp.id && (currentStudent == null || it.studentId == currentStudent?.id)
+    }
+    val existingTeam = teams.find {
+        it.opportunityId == opp.id && (currentStudent == null || it.leaderId == currentStudent?.id)
+    }
 
     var showCreateTeamDialog by remember { mutableStateOf(false) }
     var teamNameInput by remember { mutableStateOf("Team ${currentStudent?.name?.split(" ")?.firstOrNull() ?: "Alpha"}'s ${opp.title.take(12)}") }
+    var teamCreationNotSentReason by remember { mutableStateOf<String?>(null) }
     var showClubAppDialog by remember { mutableStateOf(false) }
     var showVolunteerRegDialog by remember { mutableStateOf(false) }
 
@@ -234,7 +248,7 @@ fun OpportunityDetailDialog(
                 }
             }
 
-            // Bottom Action Bar: Adaptive based on category with strong visual hierarchy & accessibility touch targets
+            // Bottom Action Bar: Adaptive based on category with Sent / Not Sent status
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -242,44 +256,67 @@ fun OpportunityDetailDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (opp.category == OpportunityCategory.CLUB) {
-                    Button(
-                        onClick = { showClubAppDialog = true },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .defaultMinSize(minHeight = 48.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(vertical = 12.dp)
-                    ) {
-                        Icon(Icons.Default.Groups, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Apply to Club Recruitment", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    if (existingClubApp != null) {
+                        RegistrationSentPill(
+                            label = androidx.compose.ui.res.stringResource(R.string.application_sent_title),
+                            subtitle = existingClubApp.roleApplied,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("detail_status_club_sent")
+                        )
+                    } else {
+                        Button(
+                            onClick = { showClubAppDialog = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .defaultMinSize(minHeight = 48.dp)
+                                .testTag("btn_detail_apply_club"),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(vertical = 12.dp)
+                        ) {
+                            Icon(Icons.Default.Groups, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Apply to Club Recruitment", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        }
                     }
                 } else if (opp.category == OpportunityCategory.VOLUNTEERING) {
-                    Button(
-                        onClick = { showVolunteerRegDialog = true },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .defaultMinSize(minHeight = 48.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = SemanticStatus.Success,
-                            contentColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(vertical = 12.dp)
-                    ) {
-                        Icon(Icons.Default.VolunteerActivism, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Register as Campus Volunteer", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    if (existingVolReg != null) {
+                        RegistrationSentPill(
+                            label = androidx.compose.ui.res.stringResource(R.string.registration_sent_title),
+                            subtitle = existingVolReg.preferredRole,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("detail_status_vol_sent")
+                        )
+                    } else {
+                        Button(
+                            onClick = { showVolunteerRegDialog = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .defaultMinSize(minHeight = 48.dp)
+                                .testTag("btn_detail_register_vol"),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = SemanticStatus.Success,
+                                contentColor = LightSurface
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(vertical = 12.dp)
+                        ) {
+                            Icon(Icons.Default.VolunteerActivism, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Register as Campus Volunteer", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        }
                     }
                 }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Button(
                         onClick = {
@@ -303,15 +340,28 @@ fun OpportunityDetailDialog(
                         Text("Find Teammates", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
 
-                    OutlinedButton(
-                        onClick = { showCreateTeamDialog = true },
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.defaultMinSize(minHeight = 48.dp),
-                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)
-                    ) {
-                        Icon(Icons.Default.GroupAdd, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Form Team", fontWeight = FontWeight.SemiBold)
+                    if (existingTeam != null) {
+                        RegistrationSentPill(
+                            label = androidx.compose.ui.res.stringResource(R.string.status_sent_badge),
+                            subtitle = existingTeam.name,
+                            modifier = Modifier.testTag("detail_status_team_sent")
+                        )
+                    } else {
+                        OutlinedButton(
+                            onClick = {
+                                teamCreationNotSentReason = null
+                                showCreateTeamDialog = true
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .defaultMinSize(minHeight = 48.dp)
+                                .testTag("btn_detail_form_team"),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)
+                        ) {
+                            Icon(Icons.Default.GroupAdd, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Form Team", fontWeight = FontWeight.SemiBold)
+                        }
                     }
                 }
             }
@@ -319,7 +369,7 @@ fun OpportunityDetailDialog(
     }
 
     if (showClubAppDialog) {
-        com.example.ui.components.ClubApplicationDialog(
+        ClubApplicationDialog(
             opportunity = opp,
             viewModel = viewModel,
             onDismiss = { showClubAppDialog = false }
@@ -327,7 +377,7 @@ fun OpportunityDetailDialog(
     }
 
     if (showVolunteerRegDialog) {
-        com.example.ui.components.VolunteerRegistrationDialog(
+        VolunteerRegistrationDialog(
             opportunity = opp,
             viewModel = viewModel,
             onDismiss = { showVolunteerRegDialog = false }
@@ -339,33 +389,68 @@ fun OpportunityDetailDialog(
             onDismissRequest = { showCreateTeamDialog = false },
             title = { Text("Form Team for ${opp.title}", fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    teamCreationNotSentReason?.let { reason ->
+                        InlineRegistrationNotSentCard(
+                            title = androidx.compose.ui.res.stringResource(R.string.registration_not_sent_title),
+                            reason = reason,
+                            modifier = Modifier.testTag("team_registration_status_not_sent")
+                        )
+                    }
                     Text(
-                        text = "You will be the team leader. You can invite complementary teammates right away.",
-                        style = MaterialTheme.typography.bodySmall
+                        text = "Enter your squad name to register as team leader.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     OutlinedTextField(
                         value = teamNameInput,
-                        onValueChange = { teamNameInput = it },
-                        label = { Text("Team Name") },
-                        modifier = Modifier.fillMaxWidth()
+                        onValueChange = {
+                            teamNameInput = it
+                            if (teamCreationNotSentReason != null) teamCreationNotSentReason = null
+                        },
+                        label = { Text("Team Name *") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("input_team_name"),
+                        singleLine = true
                     )
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.createTeamForOpportunity(opp, teamNameInput)
-                        showCreateTeamDialog = false
-                        onDismiss()
+                        viewModel.createTeamForOpportunity(
+                            opp = opp,
+                            teamName = teamNameInput,
+                            onResult = { result ->
+                                when (result) {
+                                    is com.example.viewmodel.RegistrationDeliveryResult.Sent -> {
+                                        showCreateTeamDialog = false
+                                        onDismiss()
+                                    }
+                                    is com.example.viewmodel.RegistrationDeliveryResult.NotSent -> {
+                                        teamCreationNotSentReason = result.reason
+                                    }
+                                }
+                            }
+                        )
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = Color.White)
+                    colors = ButtonDefaults.buttonColors(containerColor = SkyBluePrimary, contentColor = LightSurface),
+                    modifier = Modifier
+                        .defaultMinSize(minHeight = 48.dp)
+                        .testTag("btn_confirm_create_team")
                 ) {
-                    Text("Create Team 🚀", fontWeight = FontWeight.Bold)
+                    Text(
+                        text = if (teamCreationNotSentReason != null) androidx.compose.ui.res.stringResource(R.string.btn_retry_send) else "Register Team",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showCreateTeamDialog = false }) {
+                TextButton(
+                    onClick = { showCreateTeamDialog = false },
+                    modifier = Modifier.defaultMinSize(minHeight = 48.dp)
+                ) {
                     Text("Cancel")
                 }
             }

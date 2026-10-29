@@ -128,7 +128,7 @@ fun SurveyScreen(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
-                        text = "Field survey of undergraduate engineering students at SGSITS Indore revealing critical gaps in finding multidisciplinary teammates and discovering college opportunities.",
+                        text = "Field survey of undergraduate engineering students across campuses revealing critical gaps in finding multidisciplinary teammates and discovering inter-college opportunities.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 18.sp
@@ -350,7 +350,7 @@ fun SurveyScreen(
                             StudentQuote(
                                 quote = "Please be strict about everything don't do unnecessary things so that a basic discipline is maintained.",
                                 category = "Verification & Authenticity",
-                                appSolution = "College email verification and SGSITS branch badges ensure authentic student profiles and zero spam."
+                                appSolution = "Academic email verification and verified college & branch badges ensure authentic student profiles and zero spam across campuses."
                             ),
                             StudentQuote(
                                 quote = "Try to find different people for better networking across branches.",

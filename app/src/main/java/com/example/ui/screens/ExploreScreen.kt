@@ -1,6 +1,7 @@
 package com.example.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -97,12 +98,12 @@ fun ExploreScreen(
                             .padding(horizontal = 4.dp)
                     ) {
                         val headerInfo = when (uiState.exploreSubTab) {
-                            ExploreSubTab.CLUBS -> Triple("Clubs & Chapters", "SGSITS Inductions & Core Teams", "👥")
-                            ExploreSubTab.VOLUNTEERING -> Triple("Campus Volunteering", "NSS, Aayam & Activity Credits", "🤝")
-                            ExploreSubTab.STUDENTS -> Triple("Find Teammates", "Skill-Based Peer Discovery", "🔍")
+                            ExploreSubTab.CLUBS -> Triple("Clubs & Chapters", "Club Inductions & Core Teams", "👥")
+                            ExploreSubTab.VOLUNTEERING -> Triple("Campus Volunteering", "NSS, Fest Crews & Activity Credits", "🤝")
+                            ExploreSubTab.STUDENTS -> Triple("Find Teammates", "Inter-College Skill Discovery", "🔍")
                             ExploreSubTab.HACKATHONS -> Triple("Hackathons & Challenges", "Live Tech Contests & SIH 2026", "🏆")
                             ExploreSubTab.RESEARCH -> Triple("Research & Labs", "Faculty Projects & Core IoT Labs", "🔬")
-                            ExploreSubTab.OPPORTUNITIES -> Triple("Campus Opportunities", "All SGSITS Hub Opportunities", "🌐")
+                            ExploreSubTab.OPPORTUNITIES -> Triple("Campus Opportunities", "All Inter-College Opportunities", "🌐")
                         }
 
                         Row(
@@ -532,7 +533,23 @@ fun OpportunityHubView(
     currentStudent: StudentProfile?,
     uiState: com.example.viewmodel.UiState
 ) {
+    val clubApplications by viewModel.clubApplications.collectAsState()
+    val volunteerRegistrations by viewModel.volunteerRegistrations.collectAsState()
+    val teams by viewModel.teams.collectAsState()
+    val registeredOppIds = remember(clubApplications, volunteerRegistrations, teams, currentStudent) {
+        val sid = currentStudent?.id
+        val clubIds = clubApplications.filter { sid == null || it.studentId == sid }.map { it.clubOpportunityId }
+        val volIds = volunteerRegistrations.filter { sid == null || it.studentId == sid }.map { it.volunteerOpportunityId }
+        val teamIds = teams.filter { sid == null || it.leaderId == sid }.map { it.opportunityId }
+        (clubIds + volIds + teamIds).toSet()
+    }
     val allSkills = listOf("Python", "React", "Machine Learning", "UI/UX", "Java", "C++", "Cloud/DevOps", "IoT/Electronics", "Presentation")
+    val activeFilterCount = listOfNotNull(
+        uiState.selectedCategory,
+        uiState.selectedSkillFilter,
+        uiState.selectedModeFilter
+    ).size
+    var showOppFilters by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier
@@ -540,97 +557,126 @@ fun OpportunityHubView(
             .testTag("opportunity_feed_list"),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 96.dp)
     ) {
-        // Search Input
+        // Search Input + Compact Filters Toggle
         item {
-            OutlinedTextField(
-                value = uiState.oppSearchQuery,
-                onValueChange = { viewModel.setOppSearchQuery(it) },
-                placeholder = { Text("Search hackathons, projects, internships, skills...") },
-                leadingIcon = {
-                    Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = SkyBluePrimary)
-                },
-                trailingIcon = {
-                    if (uiState.oppSearchQuery.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.setOppSearchQuery("") }) {
-                            Icon(imageVector = Icons.Default.Clear, contentDescription = null)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = uiState.oppSearchQuery,
+                    onValueChange = { viewModel.setOppSearchQuery(it) },
+                    placeholder = { Text("Search hackathons, projects, skills...", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = SkyBluePrimary)
+                    },
+                    trailingIcon = {
+                        if (uiState.oppSearchQuery.isNotEmpty()) {
+                            IconButton(onClick = { viewModel.setOppSearchQuery("") }) {
+                                Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear search")
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("input_search_opps"),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = SkyBluePrimary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    ),
+                    singleLine = true
+                )
+
+                FilterChip(
+                    selected = showOppFilters || activeFilterCount > 0,
+                    onClick = { showOppFilters = !showOppFilters },
+                    label = {
+                        Text(
+                            if (activeFilterCount > 0) "Filters ($activeFilterCount)" else "Filters",
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Tune,
+                            contentDescription = "Toggle filters",
+                            modifier = Modifier.size(16.dp)
+                        )
+                    },
+                    modifier = Modifier
+                        .defaultMinSize(minHeight = 48.dp)
+                        .testTag("btn_toggle_opp_filters")
+                )
+            }
+        }
+
+        // Collapsible Filter Rows (hidden by default unless toggled or active)
+        item {
+            AnimatedVisibility(visible = showOppFilters || activeFilterCount > 0) {
+                Column(modifier = Modifier.padding(top = 10.dp)) {
+                    // Category Filter Chips
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        item {
+                            FilterChip(
+                                selected = uiState.selectedCategory == null,
+                                onClick = { viewModel.setCategoryFilter(null) },
+                                label = { Text("All Opportunities") }
+                            )
+                        }
+                        items(OpportunityCategory.values()) { category ->
+                            FilterChip(
+                                selected = uiState.selectedCategory == category,
+                                onClick = {
+                                    viewModel.setCategoryFilter(if (uiState.selectedCategory == category) null else category)
+                                },
+                                label = { Text("${category.iconEmoji} ${category.displayName}") }
+                            )
                         }
                     }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("input_search_opps"),
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = SkyBluePrimary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                ),
-                singleLine = true
-            )
-        }
 
-        // Category Filter Chips
-        item {
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Skill Filters
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        item {
+                            FilterChip(
+                                selected = uiState.selectedSkillFilter == null,
+                                onClick = { viewModel.setSkillFilter(null) },
+                                label = { Text("Any Skill") }
+                            )
+                        }
+                        items(allSkills) { skill ->
+                            FilterChip(
+                                selected = uiState.selectedSkillFilter == skill,
+                                onClick = {
+                                    viewModel.setSkillFilter(if (uiState.selectedSkillFilter == skill) null else skill)
+                                },
+                                label = { Text(skill) }
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // Mode Filter (Online / In-Person / Hybrid)
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        items(listOf(null to "All Modes", OpportunityMode.ONLINE to "🌐 Online", OpportunityMode.OFFLINE to "📍 In-Person", OpportunityMode.HYBRID to "⚡ Hybrid")) { (mode, title) ->
+                            val isSelected = uiState.selectedModeFilter == mode
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { viewModel.setModeFilter(mode) },
+                                label = { Text(title) }
+                            )
+                        }
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(10.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                item {
-                    FilterChip(
-                        selected = uiState.selectedCategory == null,
-                        onClick = { viewModel.setCategoryFilter(null) },
-                        label = { Text("All Opportunities") }
-                    )
-                }
-                items(OpportunityCategory.values()) { category ->
-                    FilterChip(
-                        selected = uiState.selectedCategory == category,
-                        onClick = {
-                            viewModel.setCategoryFilter(if (uiState.selectedCategory == category) null else category)
-                        },
-                        label = { Text("${category.iconEmoji} ${category.displayName}") }
-                    )
-                }
-            }
-        }
-
-        // Skill Filters
-        item {
-            Spacer(modifier = Modifier.height(6.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                item {
-                    FilterChip(
-                        selected = uiState.selectedSkillFilter == null,
-                        onClick = { viewModel.setSkillFilter(null) },
-                        label = { Text("Any Skill") }
-                    )
-                }
-                items(allSkills) { skill ->
-                    FilterChip(
-                        selected = uiState.selectedSkillFilter == skill,
-                        onClick = {
-                            viewModel.setSkillFilter(if (uiState.selectedSkillFilter == skill) null else skill)
-                        },
-                        label = { Text(skill) }
-                    )
-                }
-            }
-        }
-
-        // Mode Filter (Online / In-Person / Hybrid)
-        item {
-            Spacer(modifier = Modifier.height(6.dp))
-            LazyRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                items(listOf(null to "All Modes", OpportunityMode.ONLINE to "🌐 Online", OpportunityMode.OFFLINE to "📍 In-Person", OpportunityMode.HYBRID to "⚡ Hybrid")) { (mode, title) ->
-                    val isSelected = uiState.selectedModeFilter == mode
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { viewModel.setModeFilter(mode) },
-                        label = { Text(title) }
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(12.dp))
         }
 
         // Results count
@@ -709,7 +755,8 @@ fun OpportunityHubView(
                         matchScore = score,
                         currentStudent = currentStudent,
                         onCardClick = { viewModel.selectOpportunity(opp.id) },
-                        onFindTeammatesClick = { viewModel.openFindTeammates(opp.id) }
+                        onFindTeammatesClick = { viewModel.openFindTeammates(opp.id) },
+                        isRegistered = opp.id in registeredOppIds
                     )
                 }
             }
@@ -727,6 +774,8 @@ fun StudentDiscoveryView(
     val sentInvitationRecipientIds by viewModel.sentInvitationRecipientIds.collectAsState()
     val branches = listOf("CSE", "IT", "ECE", "MECH", "CIVIL")
     val skills = listOf("React", "Python", "Machine Learning", "UI/UX", "Presentation", "IoT/Electronics", "Cloud/DevOps")
+    val activeStudentFilters = listOfNotNull(uiState.studentBranchFilter, uiState.studentSkillFilter).size
+    var showStudentFilters by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier
@@ -734,95 +783,100 @@ fun StudentDiscoveryView(
             .testTag("student_discovery_list"),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 96.dp)
     ) {
-        // Header explanation from PPT: "84.2% relied on friends/classmates. SkillSync connects you beyond existing networks."
+        // Search Input + Compact Filters Toggle
         item {
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(imageVector = Icons.Default.Diversity3, contentDescription = null, tint = BrandIndigo)
-                    Text(
-                        text = "Discover peers with the exact skills your team lacks across branches & years.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                OutlinedTextField(
+                    value = uiState.studentSearchQuery,
+                    onValueChange = { viewModel.setStudentSearchQuery(it) },
+                    placeholder = { Text("Search by college, skill, or branch...", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = SkyBluePrimary)
+                    },
+                    trailingIcon = {
+                        if (uiState.studentSearchQuery.isNotEmpty()) {
+                            IconButton(onClick = { viewModel.setStudentSearchQuery("") }) {
+                                Icon(imageVector = Icons.Default.Clear, contentDescription = "Clear search")
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("input_search_students"),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
+                )
+
+                FilterChip(
+                    selected = showStudentFilters || activeStudentFilters > 0,
+                    onClick = { showStudentFilters = !showStudentFilters },
+                    label = {
+                        Text(
+                            if (activeStudentFilters > 0) "Filters ($activeStudentFilters)" else "Filters",
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Tune,
+                            contentDescription = "Toggle student filters",
+                            modifier = Modifier.size(16.dp)
+                        )
+                    },
+                    modifier = Modifier
+                        .defaultMinSize(minHeight = 48.dp)
+                        .testTag("btn_toggle_student_filters")
+                )
             }
-            Spacer(modifier = Modifier.height(10.dp))
         }
 
-        // Search Input
+        // Collapsible Branch & Skill Filter Chips
         item {
-            OutlinedTextField(
-                value = uiState.studentSearchQuery,
-                onValueChange = { viewModel.setStudentSearchQuery(it) },
-                placeholder = { Text("Search by skill (e.g. React, ML, UI/UX) or branch...") },
-                leadingIcon = {
-                    Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = SkyBluePrimary)
-                },
-                trailingIcon = {
-                    if (uiState.studentSearchQuery.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.setStudentSearchQuery("") }) {
-                            Icon(imageVector = Icons.Default.Clear, contentDescription = null)
+            AnimatedVisibility(visible = showStudentFilters || activeStudentFilters > 0) {
+                Column(modifier = Modifier.padding(top = 8.dp)) {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        item {
+                            FilterChip(
+                                selected = uiState.studentBranchFilter == null,
+                                onClick = { viewModel.setStudentBranchFilter(null) },
+                                label = { Text("All Branches") }
+                            )
+                        }
+                        items(branches) { branch ->
+                            FilterChip(
+                                selected = uiState.studentBranchFilter == branch,
+                                onClick = {
+                                    viewModel.setStudentBranchFilter(if (uiState.studentBranchFilter == branch) null else branch)
+                                },
+                                label = { Text(branch) }
+                            )
                         }
                     }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("input_search_students"),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true
-            )
-        }
 
-        // Branch filter chips
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                item {
-                    FilterChip(
-                        selected = uiState.studentBranchFilter == null,
-                        onClick = { viewModel.setStudentBranchFilter(null) },
-                        label = { Text("All Branches") }
-                    )
-                }
-                items(branches) { branch ->
-                    FilterChip(
-                        selected = uiState.studentBranchFilter == branch,
-                        onClick = {
-                            viewModel.setStudentBranchFilter(if (uiState.studentBranchFilter == branch) null else branch)
-                        },
-                        label = { Text(branch) }
-                    )
-                }
-            }
-        }
+                    Spacer(modifier = Modifier.height(6.dp))
 
-        // Quick Skill filter chips
-        item {
-            Spacer(modifier = Modifier.height(6.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                item {
-                    FilterChip(
-                        selected = uiState.studentSkillFilter == null,
-                        onClick = { viewModel.setStudentSkillFilter(null) },
-                        label = { Text("Any Skill") }
-                    )
-                }
-                items(skills) { skill ->
-                    FilterChip(
-                        selected = uiState.studentSkillFilter == skill,
-                        onClick = {
-                            viewModel.setStudentSkillFilter(if (uiState.studentSkillFilter == skill) null else skill)
-                        },
-                        label = { Text(skill) }
-                    )
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        item {
+                            FilterChip(
+                                selected = uiState.studentSkillFilter == null,
+                                onClick = { viewModel.setStudentSkillFilter(null) },
+                                label = { Text("Any Skill") }
+                            )
+                        }
+                        items(skills) { skill ->
+                            FilterChip(
+                                selected = uiState.studentSkillFilter == skill,
+                                onClick = {
+                                    viewModel.setStudentSkillFilter(if (uiState.studentSkillFilter == skill) null else skill)
+                                },
+                                label = { Text(skill) }
+                            )
+                        }
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(10.dp))
@@ -907,9 +961,11 @@ fun StudentDiscoveryView(
                                     VerificationBadge(label = "Verified")
                                 }
                                 Text(
-                                    text = "${student.branch} • ${student.year}",
+                                    text = "${student.college} • ${student.branch} • ${student.year}",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -1121,7 +1177,7 @@ fun ClubRecruitmentView(
                         }
                         Column {
                             Text(
-                                text = "SGSITS CLUBS & SOCIETIES HUB",
+                                text = "CAMPUS & INTER-COLLEGE CLUBS HUB",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
@@ -1202,7 +1258,7 @@ fun ClubRecruitmentView(
                                 border = androidx.compose.foundation.BorderStroke(1.dp, statusColors.border)
                             ) {
                                 Text(
-                                    text = app.status.title,
+                                    text = "${androidx.compose.ui.res.stringResource(com.example.R.string.status_sent_badge)} • ${app.status.title}",
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = statusColors.text,
@@ -1215,21 +1271,10 @@ fun ClubRecruitmentView(
                             text = "\"${app.sop}\"",
                             style = MaterialTheme.typography.bodySmall,
                             fontStyle = FontStyle.Italic,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
                         )
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(Icons.Default.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(13.dp))
-                            Text(
-                                text = "Application forwarded to Club Executive Committee • Status tracks live",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 10.sp
-                            )
-                        }
                     }
                 }
             }
@@ -1382,30 +1427,44 @@ fun ClubRecruitmentView(
                         }
                     }
 
-                    // Actions with strong visual hierarchy
+                    // Actions with clear Sent status once applied
+                    val existingApp = clubApplications.find {
+                        it.clubOpportunityId == opp.id && (currentStudent == null || it.studentId == currentStudent.id)
+                    }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Button(
-                            onClick = { onApplyClub(opp) },
-                            modifier = Modifier
-                                .weight(1.3f)
-                                .defaultMinSize(minHeight = 44.dp),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
+                        if (existingApp != null) {
+                            RegistrationSentPill(
+                                label = androidx.compose.ui.res.stringResource(com.example.R.string.application_sent_title),
+                                modifier = Modifier
+                                    .weight(1.3f)
+                                    .testTag("status_club_sent_${opp.id}")
                             )
-                        ) {
-                            Text("Apply to Club", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        } else {
+                            Button(
+                                onClick = { onApplyClub(opp) },
+                                modifier = Modifier
+                                    .weight(1.3f)
+                                    .defaultMinSize(minHeight = 48.dp)
+                                    .testTag("btn_apply_club_${opp.id}"),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                )
+                            ) {
+                                Text("Apply to Club", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
                         }
 
                         OutlinedButton(
                             onClick = { viewModel.openFindTeammates(opp.id) },
                             modifier = Modifier
                                 .weight(1f)
-                                .defaultMinSize(minHeight = 44.dp),
+                                .defaultMinSize(minHeight = 48.dp),
                             shape = RoundedCornerShape(10.dp)
                         ) {
                             Icon(Icons.Default.Groups, contentDescription = null, modifier = Modifier.size(15.dp))
@@ -1532,7 +1591,7 @@ fun VolunteeringDrivesView(
                                 border = androidx.compose.foundation.BorderStroke(1.dp, regColors.border)
                             ) {
                                 Text(
-                                    text = "REGISTERED",
+                                    text = androidx.compose.ui.res.stringResource(com.example.R.string.status_sent_badge),
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = regColors.text,
@@ -1546,20 +1605,9 @@ fun VolunteeringDrivesView(
                                 text = "\"${vol.motivation}\"",
                                 style = MaterialTheme.typography.bodySmall,
                                 fontStyle = FontStyle.Italic,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(Icons.Default.VerifiedUser, contentDescription = null, tint = BrandEmerald, modifier = Modifier.size(13.dp))
-                            Text(
-                                text = "Official university duty leaves & volunteer certificate credited upon completion",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = BrandEmerald,
-                                fontSize = 10.sp
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -1697,27 +1745,41 @@ fun VolunteeringDrivesView(
                         }
                     }
 
-                    // Actions with strong visual hierarchy
+                    // Actions with clear Sent status once registered
+                    val existingReg = volunteerRegistrations.find {
+                        it.volunteerOpportunityId == opp.id && (currentStudent == null || it.studentId == currentStudent.id)
+                    }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Button(
-                            onClick = { onRegisterVolunteer(opp) },
-                            modifier = Modifier
-                                .weight(1.3f)
-                                .defaultMinSize(minHeight = 44.dp),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = SemanticStatus.Success, contentColor = Color.White)
-                        ) {
-                            Text("Volunteer Now", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        if (existingReg != null) {
+                            RegistrationSentPill(
+                                label = androidx.compose.ui.res.stringResource(com.example.R.string.registration_sent_title),
+                                modifier = Modifier
+                                    .weight(1.3f)
+                                    .testTag("status_vol_sent_${opp.id}")
+                            )
+                        } else {
+                            Button(
+                                onClick = { onRegisterVolunteer(opp) },
+                                modifier = Modifier
+                                    .weight(1.3f)
+                                    .defaultMinSize(minHeight = 48.dp)
+                                    .testTag("btn_register_vol_${opp.id}"),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = SemanticStatus.Success, contentColor = LightSurface)
+                            ) {
+                                Text("Volunteer Now", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
                         }
 
                         OutlinedButton(
                             onClick = { viewModel.openFindTeammates(opp.id) },
                             modifier = Modifier
                                 .weight(1f)
-                                .defaultMinSize(minHeight = 44.dp),
+                                .defaultMinSize(minHeight = 48.dp),
                             shape = RoundedCornerShape(10.dp)
                         ) {
                             Icon(Icons.Default.GroupAdd, contentDescription = null, modifier = Modifier.size(15.dp))

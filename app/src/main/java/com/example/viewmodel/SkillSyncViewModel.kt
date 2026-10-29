@@ -23,6 +23,20 @@ import java.util.UUID
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+sealed class RegistrationDeliveryResult {
+    data class Sent(
+        val title: String,
+        val detail: String,
+        val targetId: String? = null,
+        val syncedToCloud: Boolean = false
+    ) : RegistrationDeliveryResult()
+
+    data class NotSent(
+        val title: String,
+        val reason: String
+    ) : RegistrationDeliveryResult()
+}
+
 data class UiState(
     val isSplashVisible: Boolean = true,
     val isAuthenticated: Boolean = false,
@@ -44,7 +58,8 @@ data class UiState(
     val isDarkTheme: Boolean = false,
     val userMessage: String? = null,
     val selectedClubForApplication: Opportunity? = null,
-    val selectedVolunteerForRegistration: Opportunity? = null
+    val selectedVolunteerForRegistration: Opportunity? = null,
+    val lastRegistrationStatus: RegistrationDeliveryResult? = null
 )
 
 enum class AppTab(val title: String) {
@@ -66,6 +81,34 @@ enum class ExploreSubTab(val title: String) {
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class SkillSyncViewModel(application: Application) : AndroidViewModel(application) {
+
+    companion object {
+        const val DEMO_STUDENT_ID = "student_amber"
+
+        fun inferCollegeFromEmail(email: String): String {
+            val domain = email.substringAfter("@", "").lowercase()
+            return when {
+                domain.contains("sgsits") -> "SGSITS Indore"
+                domain.contains("iitb") -> "IIT Bombay"
+                domain.contains("iitm") -> "IIT Madras"
+                domain.contains("iitd") -> "IIT Delhi"
+                domain.contains("nitt") -> "NIT Trichy"
+                domain.contains("iiit") -> "IIIT Hyderabad"
+                domain.contains("bits") -> "BITS Pilani"
+                domain.contains("dtu") -> "DTU Delhi"
+                domain.contains("vit") -> "VIT Vellore"
+                domain.endsWith(".edu") || domain.endsWith(".ac.in") || domain.endsWith(".edu.in") -> {
+                    val core = domain
+                        .removeSuffix(".edu.in")
+                        .removeSuffix(".ac.in")
+                        .removeSuffix(".edu")
+                        .substringAfterLast(".")
+                    if (core.isNotBlank() && core.length <= 8) "${core.uppercase()} University" else "University Campus"
+                }
+                else -> "University Campus"
+            }
+        }
+    }
 
     private val repository: SkillSyncRepository
     val firebaseRepository: FirebaseSkillSyncRepository by lazy {
@@ -157,7 +200,7 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
             ClubApplication(
                 id = "app_acm_amber",
                 clubOpportunityId = "opp_acm_recruit",
-                clubName = "ACM SGSITS Student Chapter",
+                clubName = "ACM Student Chapter",
                 studentId = "student_amber",
                 studentName = "Amber Patel",
                 roleApplied = "Technical Associate & Web Lead",
@@ -268,6 +311,7 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 val notSelf = s.id != state.currentStudentId
                 val matchesQuery = query.isBlank() ||
                         s.name.contains(query, ignoreCase = true) ||
+                        s.college.contains(query, ignoreCase = true) ||
                         s.branch.contains(query, ignoreCase = true) ||
                         s.skills.any { it.name.contains(query, ignoreCase = true) } ||
                         s.interests.any { it.contains(query, ignoreCase = true) }
@@ -312,10 +356,6 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun setActiveTeam(teamId: String) {
         _uiState.update { it.copy(activeTeamId = teamId, activeTab = AppTab.TEAMS) }
-    }
-
-    fun switchStudent(studentId: String) {
-        _uiState.update { it.copy(currentStudentId = studentId, userMessage = "Switched active student profile") }
     }
 
     fun setOppSearchQuery(query: String) {
@@ -431,18 +471,86 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun createTeamForOpportunity(opp: Opportunity, teamName: String) {
+    fun createTeamForOpportunity(
+        opp: Opportunity,
+        teamName: String,
+        onResult: (RegistrationDeliveryResult) -> Unit = {}
+    ) {
+        val trimmedName = teamName.trim()
+        if (trimmedName.isBlank()) {
+            val err = RegistrationDeliveryResult.NotSent(
+                title = "Registration Not Sent",
+                reason = "Please enter a team name."
+            )
+            _uiState.update { it.copy(lastRegistrationStatus = err) }
+            onResult(err)
+            return
+        }
+
         viewModelScope.launch {
-            val student = currentStudent.value ?: return@launch
-            val newTeamId = repository.createTeam(teamName, opp, student)
+            val student = currentStudent.value
+                ?: students.value.find { it.id == _uiState.value.currentStudentId }
+            if (student == null) {
+                val err = RegistrationDeliveryResult.NotSent(
+                    title = "Registration Not Sent",
+                    reason = "Student profile is still loading. Please try again."
+                )
+                _uiState.update { it.copy(lastRegistrationStatus = err) }
+                onResult(err)
+                return@launch
+            }
+
+            val newTeamId = repository.createTeam(trimmedName, opp, student)
+            var syncedToCloud = false
+            val fbUser = firebaseRepository.auth.currentUser
+            if (fbUser != null) {
+                try {
+                    val cloudTeam = Team(
+                        id = newTeamId,
+                        name = trimmedName,
+                        opportunityId = opp.id,
+                        opportunityTitle = opp.title,
+                        organizer = opp.organizer,
+                        leaderId = fbUser.uid,
+                        leaderName = student.name,
+                        maxMembers = opp.teamSizeMax,
+                        status = ApplicationStatus.TEAM_FORMING
+                    )
+                    firebaseRepository.createTeam(cloudTeam, listOf(fbUser.uid))
+                    syncedToCloud = true
+                } catch (e: Exception) {
+                    Log.w("SkillSyncVM", "Failed to sync team registration to Firestore", e)
+                    val err = RegistrationDeliveryResult.NotSent(
+                        title = "Registration Not Sent",
+                        reason = e.localizedMessage ?: "Cloud sync failed. Please retry."
+                    )
+                    _uiState.update {
+                        it.copy(
+                            lastRegistrationStatus = err,
+                            userMessage = "✕ Registration Not Sent: ${err.reason}"
+                        )
+                    }
+                    onResult(err)
+                    return@launch
+                }
+            }
+
+            val sent = RegistrationDeliveryResult.Sent(
+                title = "Team Registration Sent",
+                detail = "$trimmedName • ${opp.title}",
+                targetId = opp.id,
+                syncedToCloud = syncedToCloud
+            )
             _uiState.update {
                 it.copy(
                     activeTeamId = newTeamId,
                     activeTab = AppTab.TEAMS,
                     selectedOpportunityId = null,
-                    userMessage = "Team '$teamName' created successfully! 🎉"
+                    lastRegistrationStatus = sent,
+                    userMessage = "✓ Team Registration Sent — '$trimmedName'"
                 )
             }
+            onResult(sent)
         }
     }
 
@@ -665,7 +773,7 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 return@launch
             }
             if (student.password != trimmedPassword && trimmedPassword != "password123") {
-                _uiState.update { it.copy(authError = "Incorrect password. (Hint: Demo accounts use password123)") }
+                _uiState.update { it.copy(authError = "Incorrect password. (Hint: Demo account uses password123)") }
                 onComplete?.invoke(false)
                 return@launch
             }
@@ -714,7 +822,7 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
                             student = StudentProfile(
                                 id = uid,
                                 name = name,
-                                college = "SGSITS Indore",
+                                college = inferCollegeFromEmail(email),
                                 branch = "CSE",
                                 year = "3rd Year",
                                 email = email,
@@ -755,16 +863,17 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun quickLogin(studentId: String) {
+    fun quickLogin(studentId: String = DEMO_STUDENT_ID) {
         viewModelScope.launch {
-            val student = students.value.find { it.id == studentId }
+            val targetDemoId = DEMO_STUDENT_ID
+            val student = students.value.find { it.id == targetDemoId }
             _uiState.update {
                 it.copy(
                     isAuthenticated = true,
-                    currentStudentId = studentId,
+                    currentStudentId = targetDemoId,
                     authError = null,
                     authSuccessMessage = null,
-                    userMessage = "Logged in as ${student?.name ?: "Student"}! 🚀"
+                    userMessage = "Logged in with Demo Account (${student?.name ?: "Amber Patel"})! 🚀"
                 )
             }
         }
@@ -792,30 +901,70 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
             val trimmedBranch = branch.trim()
             val trimmedYear = year.trim()
 
-            if (trimmedName.isBlank() || trimmedEmail.isBlank() || trimmedPassword.isBlank()) {
-                _uiState.update { it.copy(authError = "Full Name, College Email, and Password are required") }
+            if (trimmedName.isBlank() || trimmedCollege.isBlank() || trimmedEmail.isBlank() || trimmedPassword.isBlank()) {
+                val reason = "Full Name, College / University, Email, and Password are required"
+                _uiState.update {
+                    it.copy(
+                        authError = reason,
+                        authSuccessMessage = null,
+                        lastRegistrationStatus = RegistrationDeliveryResult.NotSent(
+                            title = "Registration Not Sent",
+                            reason = reason
+                        )
+                    )
+                }
                 return@launch
             }
 
             if (trimmedPassword.length < 6) {
-                _uiState.update { it.copy(authError = "Password must be at least 6 characters") }
+                val reason = "Password must be at least 6 characters"
+                _uiState.update {
+                    it.copy(
+                        authError = reason,
+                        authSuccessMessage = null,
+                        lastRegistrationStatus = RegistrationDeliveryResult.NotSent(
+                            title = "Registration Not Sent",
+                            reason = reason
+                        )
+                    )
+                }
                 return@launch
             }
 
             val existing = repository.getStudentByEmail(trimmedEmail)
             if (existing != null) {
-                _uiState.update { it.copy(authError = "An account with '$trimmedEmail' already exists. Please log in!") }
+                val reason = "An account with '$trimmedEmail' already exists. Please log in!"
+                _uiState.update {
+                    it.copy(
+                        authError = reason,
+                        authSuccessMessage = null,
+                        lastRegistrationStatus = RegistrationDeliveryResult.NotSent(
+                            title = "Registration Not Sent",
+                            reason = reason
+                        )
+                    )
+                }
                 return@launch
             }
 
             val newId = "student_" + UUID.randomUUID().toString().substring(0, 8)
-            val isVerifiedDomain = trimmedEmail.endsWith(".edu") || trimmedEmail.endsWith(".ac.in") ||
-                    trimmedEmail.contains("college") || trimmedEmail.contains("univ")
+            val lowerEmail = trimmedEmail.lowercase()
+            val isVerifiedDomain = lowerEmail.endsWith(".edu") ||
+                    lowerEmail.endsWith(".ac.in") ||
+                    lowerEmail.endsWith(".edu.in") ||
+                    lowerEmail.endsWith(".ac.uk") ||
+                    lowerEmail.contains("college") ||
+                    lowerEmail.contains("univ") ||
+                    lowerEmail.contains("iit") ||
+                    lowerEmail.contains("nit") ||
+                    lowerEmail.contains("iiit") ||
+                    lowerEmail.contains("bits") ||
+                    lowerEmail.contains("inst")
 
             val newStudent = StudentProfile(
                 id = newId,
                 name = trimmedName,
-                college = if (trimmedCollege.isNotBlank()) trimmedCollege else "Campus University",
+                college = trimmedCollege,
                 branch = if (trimmedBranch.isNotBlank()) trimmedBranch else "Computer Science",
                 year = if (trimmedYear.isNotBlank()) trimmedYear else "2nd Year",
                 email = trimmedEmail,
@@ -838,6 +987,12 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
             )
 
             repository.registerStudent(newStudent)
+            val sentStatus = RegistrationDeliveryResult.Sent(
+                title = "Registration Sent",
+                detail = "Account active for $trimmedName",
+                targetId = newId,
+                syncedToCloud = false
+            )
 
             if (autoLogin) {
                 _uiState.update {
@@ -845,15 +1000,17 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
                         isAuthenticated = true,
                         currentStudentId = newId,
                         authError = null,
-                        authSuccessMessage = "Account created successfully! Welcome, $trimmedName! ✨",
-                        userMessage = "Account created successfully! Welcome, $trimmedName! ✨"
+                        authSuccessMessage = "Registration Sent • Welcome, $trimmedName!",
+                        userMessage = "✓ Registration Sent — Welcome, $trimmedName!",
+                        lastRegistrationStatus = sentStatus
                     )
                 }
             } else {
                 _uiState.update {
                     it.copy(
                         authError = null,
-                        authSuccessMessage = "Account created successfully! Please log in with your credentials."
+                        authSuccessMessage = "Registration Sent! Please log in with your credentials.",
+                        lastRegistrationStatus = sentStatus
                     )
                 }
             }
@@ -866,13 +1023,18 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
             it.copy(
                 isAuthenticated = false,
                 activeTab = AppTab.HOME,
-                userMessage = "Logged out successfully"
+                userMessage = "Logged out successfully",
+                lastRegistrationStatus = null
             )
         }
     }
 
     fun clearAuthError() {
         _uiState.update { it.copy(authError = null) }
+    }
+
+    fun clearRegistrationStatus() {
+        _uiState.update { it.copy(lastRegistrationStatus = null) }
     }
 
     fun openClubApplication(opp: Opportunity) {
@@ -895,27 +1057,102 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
         opp: Opportunity,
         roleApplied: String,
         sop: String,
-        portfolioUrl: String
+        portfolioUrl: String,
+        onResult: (RegistrationDeliveryResult) -> Unit = {}
     ) {
-        val student = currentStudent.value ?: return
-        val newApp = ClubApplication(
-            id = "club_app_${UUID.randomUUID().toString().take(8)}",
-            clubOpportunityId = opp.id,
-            clubName = opp.organizer,
-            studentId = student.id,
-            studentName = student.name,
-            roleApplied = roleApplied,
-            sop = sop,
-            portfolioUrl = portfolioUrl,
-            status = ApplicationStatus.SUBMITTED,
-            timestamp = System.currentTimeMillis()
-        )
-        _clubApplications.update { listOf(newApp) + it }
-        _uiState.update {
-            it.copy(
-                selectedClubForApplication = null,
-                userMessage = "Application submitted to ${opp.organizer} for $roleApplied! 📋"
+        val trimmedRole = roleApplied.trim()
+        val trimmedSop = sop.trim()
+        val trimmedPortfolio = portfolioUrl.trim()
+
+        if (trimmedRole.isBlank()) {
+            val err = RegistrationDeliveryResult.NotSent(
+                title = "Application Not Sent",
+                reason = "Please select a preferred role."
             )
+            _uiState.update { it.copy(lastRegistrationStatus = err) }
+            onResult(err)
+            return
+        }
+        if (trimmedSop.length < 10) {
+            val err = RegistrationDeliveryResult.NotSent(
+                title = "Application Not Sent",
+                reason = "Statement of Purpose must be at least 10 characters."
+            )
+            _uiState.update { it.copy(lastRegistrationStatus = err) }
+            onResult(err)
+            return
+        }
+
+        val activeStudentId = _uiState.value.currentStudentId
+        if (activeStudentId.isBlank()) {
+            val err = RegistrationDeliveryResult.NotSent(
+                title = "Application Not Sent",
+                reason = "Please sign in before submitting an application."
+            )
+            _uiState.update { it.copy(lastRegistrationStatus = err) }
+            onResult(err)
+            return
+        }
+
+        val studentName = currentStudent.value?.name
+            ?: students.value.find { it.id == activeStudentId }?.name
+            ?: "Campus Student"
+
+        viewModelScope.launch {
+            val newApp = ClubApplication(
+                id = "club_app_${UUID.randomUUID().toString().take(8)}",
+                clubOpportunityId = opp.id,
+                clubName = opp.organizer,
+                studentId = activeStudentId,
+                studentName = studentName,
+                roleApplied = trimmedRole,
+                sop = trimmedSop,
+                portfolioUrl = trimmedPortfolio,
+                status = ApplicationStatus.SUBMITTED,
+                timestamp = System.currentTimeMillis()
+            )
+
+            var syncedToCloud = false
+            if (firebaseRepository.auth.currentUser != null) {
+                try {
+                    firebaseRepository.submitClubApplication(newApp)
+                    syncedToCloud = true
+                } catch (e: Exception) {
+                    Log.w("SkillSyncVM", "Failed to deliver club application to Firestore", e)
+                    val err = RegistrationDeliveryResult.NotSent(
+                        title = "Application Not Sent",
+                        reason = e.localizedMessage ?: "Network error while sending application."
+                    )
+                    _uiState.update {
+                        it.copy(
+                            lastRegistrationStatus = err,
+                            userMessage = "✕ Application Not Sent: ${err.reason}"
+                        )
+                    }
+                    onResult(err)
+                    return@launch
+                }
+            }
+
+            _clubApplications.update { existing ->
+                listOf(newApp) + existing.filterNot {
+                    it.clubOpportunityId == opp.id && it.studentId == activeStudentId
+                }
+            }
+            val sent = RegistrationDeliveryResult.Sent(
+                title = "Application Sent",
+                detail = "${opp.organizer} • $trimmedRole",
+                targetId = opp.id,
+                syncedToCloud = syncedToCloud
+            )
+            _uiState.update {
+                it.copy(
+                    selectedClubForApplication = null,
+                    lastRegistrationStatus = sent,
+                    userMessage = "✓ Application Sent — ${opp.organizer}"
+                )
+            }
+            onResult(sent)
         }
     }
 
@@ -923,27 +1160,102 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
         opp: Opportunity,
         preferredRole: String,
         hoursAvailable: String,
-        motivation: String
+        motivation: String,
+        onResult: (RegistrationDeliveryResult) -> Unit = {}
     ) {
-        val student = currentStudent.value ?: return
-        val newVol = VolunteerRegistration(
-            id = "vol_reg_${UUID.randomUUID().toString().take(8)}",
-            volunteerOpportunityId = opp.id,
-            eventTitle = opp.title,
-            studentId = student.id,
-            studentName = student.name,
-            preferredRole = preferredRole,
-            hoursAvailable = hoursAvailable,
-            motivation = motivation,
-            status = ApplicationStatus.ACCEPTED,
-            timestamp = System.currentTimeMillis()
-        )
-        _volunteerRegistrations.update { listOf(newVol) + it }
-        _uiState.update {
-            it.copy(
-                selectedVolunteerForRegistration = null,
-                userMessage = "Successfully registered for ${opp.title} as $preferredRole! 🤝"
+        val trimmedRole = preferredRole.trim()
+        val trimmedHours = hoursAvailable.trim()
+        val trimmedMotivation = motivation.trim()
+
+        if (trimmedRole.isBlank()) {
+            val err = RegistrationDeliveryResult.NotSent(
+                title = "Registration Not Sent",
+                reason = "Please select a volunteer role."
             )
+            _uiState.update { it.copy(lastRegistrationStatus = err) }
+            onResult(err)
+            return
+        }
+        if (trimmedHours.isBlank()) {
+            val err = RegistrationDeliveryResult.NotSent(
+                title = "Registration Not Sent",
+                reason = "Please enter your available time commitment."
+            )
+            _uiState.update { it.copy(lastRegistrationStatus = err) }
+            onResult(err)
+            return
+        }
+
+        val activeStudentId = _uiState.value.currentStudentId
+        if (activeStudentId.isBlank()) {
+            val err = RegistrationDeliveryResult.NotSent(
+                title = "Registration Not Sent",
+                reason = "Please sign in before registering."
+            )
+            _uiState.update { it.copy(lastRegistrationStatus = err) }
+            onResult(err)
+            return
+        }
+
+        val studentName = currentStudent.value?.name
+            ?: students.value.find { it.id == activeStudentId }?.name
+            ?: "Campus Student"
+
+        viewModelScope.launch {
+            val newVol = VolunteerRegistration(
+                id = "vol_reg_${UUID.randomUUID().toString().take(8)}",
+                volunteerOpportunityId = opp.id,
+                eventTitle = opp.title,
+                studentId = activeStudentId,
+                studentName = studentName,
+                preferredRole = trimmedRole,
+                hoursAvailable = trimmedHours,
+                motivation = trimmedMotivation,
+                status = ApplicationStatus.ACCEPTED,
+                timestamp = System.currentTimeMillis()
+            )
+
+            var syncedToCloud = false
+            if (firebaseRepository.auth.currentUser != null) {
+                try {
+                    firebaseRepository.submitVolunteerRegistration(newVol)
+                    syncedToCloud = true
+                } catch (e: Exception) {
+                    Log.w("SkillSyncVM", "Failed to deliver volunteer registration to Firestore", e)
+                    val err = RegistrationDeliveryResult.NotSent(
+                        title = "Registration Not Sent",
+                        reason = e.localizedMessage ?: "Network error while sending registration."
+                    )
+                    _uiState.update {
+                        it.copy(
+                            lastRegistrationStatus = err,
+                            userMessage = "✕ Registration Not Sent: ${err.reason}"
+                        )
+                    }
+                    onResult(err)
+                    return@launch
+                }
+            }
+
+            _volunteerRegistrations.update { existing ->
+                listOf(newVol) + existing.filterNot {
+                    it.volunteerOpportunityId == opp.id && it.studentId == activeStudentId
+                }
+            }
+            val sent = RegistrationDeliveryResult.Sent(
+                title = "Registration Sent",
+                detail = "${opp.title} • $trimmedRole",
+                targetId = opp.id,
+                syncedToCloud = syncedToCloud
+            )
+            _uiState.update {
+                it.copy(
+                    selectedVolunteerForRegistration = null,
+                    lastRegistrationStatus = sent,
+                    userMessage = "✓ Registration Sent — ${opp.title}"
+                )
+            }
+            onResult(sent)
         }
     }
 

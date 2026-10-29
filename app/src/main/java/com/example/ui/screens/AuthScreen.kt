@@ -76,6 +76,7 @@ fun AuthScreen(
     var showForgotPasswordDialog by remember { mutableStateOf(false) }
     var forgotPasswordEmail by remember { mutableStateOf("") }
     var forgotPasswordSent by remember { mutableStateOf(false) }
+    var showTeamCredits by remember { mutableStateOf(false) }
 
     // Sign Up form state
     val context = LocalContext.current
@@ -95,7 +96,7 @@ fun AuthScreen(
     }
 
     var signUpName by remember { mutableStateOf("") }
-    var signUpCollege by remember { mutableStateOf("SGSITS Indore") }
+    var signUpCollege by remember { mutableStateOf("") }
     var signUpBranch by remember { mutableStateOf("Computer Science & Engineering") }
     var signUpYear by remember { mutableStateOf("2nd Year") }
     var signUpEmail by remember { mutableStateOf("") }
@@ -120,7 +121,19 @@ fun AuthScreen(
         "Data Science", "SQL", "Presentation"
     )
 
-    // Branches (SGSITS Departments)
+    // Popular colleges quick-picks (users can also type any college or university)
+    val popularColleges = listOf(
+        "IIT Bombay",
+        "NIT Trichy",
+        "IIIT Hyderabad",
+        "BITS Pilani",
+        "DTU Delhi",
+        "VIT Vellore",
+        "SGSITS Indore",
+        "MANIT Bhopal"
+    )
+
+    // Academic Branches / Departments
     val popularBranches = listOf(
         "Computer Science & Engineering",
         "Information Technology",
@@ -147,164 +160,58 @@ fun AuthScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             contentPadding = PaddingValues(top = 20.dp, bottom = 40.dp)
         ) {
-            // App Branding Header matching official SkillSync identity
+            // Clean Minimalist App Branding Header
             item {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 20.dp)
+                        .padding(bottom = 18.dp)
                 ) {
-                    // Top Taglines from official diagram
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(
+                                Brush.linearGradient(
+                                    listOf(SplashLogoSurfaceStart, SplashLogoSurfaceEnd)
+                                )
+                            )
+                            .border(
+                                1.dp,
+                                Brush.linearGradient(
+                                    listOf(BrandIndigo.copy(alpha = 0.35f), BrandCyan.copy(alpha = 0.45f))
+                                ),
+                                RoundedCornerShape(18.dp)
+                            ),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "CONNECT",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = BrandPink,
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 1.2.sp
-                        )
-                        Box(
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_skillsync_logo),
+                            contentDescription = "SkillSync Official Logo",
                             modifier = Modifier
-                                .size(4.dp)
-                                .clip(CircleShape)
-                                .background(BrandPink)
-                        )
-                        Text(
-                            text = "COLLABORATE",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 1.2.sp
-                        )
-                        Box(
-                            modifier = Modifier
-                                .size(4.dp)
-                                .clip(CircleShape)
-                                .background(BrandCyan)
-                        )
-                        Text(
-                            text = "GROW",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = BrandCyan,
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 1.2.sp
+                                .size(56.dp)
+                                .clip(RoundedCornerShape(14.dp)),
+                            contentScale = ContentScale.Fit
                         )
                     }
 
+                    Spacer(modifier = Modifier.height(10.dp))
+
                     Text(
-                        text = "STUDENTS   ×   OPPORTUNITIES   ×   TEAMS",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 1.sp,
-                        modifier = Modifier.padding(top = 4.dp, bottom = 14.dp)
+                        text = "SkillSync",
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = (-0.5).sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
-                    // Central Glowing Logo Badge from image
-                    Surface(
-                        shape = RoundedCornerShape(22.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.5.dp,
-                            Brush.linearGradient(listOf(BrandIndigo.copy(alpha = 0.4f), BrandCyan.copy(alpha = 0.6f)))
-                        ),
-                        shadowElevation = 6.dp,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .clip(RoundedCornerShape(18.dp))
-                                    .background(
-                                        Brush.linearGradient(
-                                            listOf(Color(0xFFEEF2FF), Color(0xFFE0F2FE))
-                                        )
-                                    )
-                                    .border(
-                                        1.dp,
-                                        Brush.linearGradient(
-                                            listOf(BrandIndigo.copy(alpha = 0.3f), BrandCyan.copy(alpha = 0.4f))
-                                        ),
-                                        RoundedCornerShape(18.dp)
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.ic_skillsync_logo),
-                                    contentDescription = "SkillSync Official Logo",
-                                    modifier = Modifier
-                                        .size(72.dp)
-                                        .clip(RoundedCornerShape(16.dp)),
-                                    contentScale = ContentScale.Fit
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            Text(
-                                text = "SkillSync",
-                                style = MaterialTheme.typography.headlineMedium.copy(
-                                    fontWeight = FontWeight.ExtraBold,
-                                    letterSpacing = (-0.5).sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-
-                            Text(
-                                text = "Turn Interests Into Impact",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Connected Nodes pills from the official graphic
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    ) {
-                        val pillars = listOf(
-                            "</> Hackathons" to BrandPink,
-                            "📄 Projects" to BrandCyan,
-                            "🏆 Competitions" to Color(0xFF60A5FA),
-                            "👥 Clubs" to Color(0xFFA78BFA),
-                            "💖 Volunteering" to BrandPink,
-                            "🚀 Opportunities" to BrandCyan
-                        )
-                        items(pillars) { (title, color) ->
-                            Surface(
-                                shape = RoundedCornerShape(20.dp),
-                                color = color.copy(alpha = 0.12f),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, color.copy(alpha = 0.45f))
-                            ) {
-                                Text(
-                                    text = title,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = color,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                                )
-                            }
-                        }
-                    }
-
                     Text(
-                        text = "Student Opportunity & Skill-Based Team Matching Platform",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = 4.dp)
+                        text = "Turn Interests Into Impact",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -436,7 +343,7 @@ fun AuthScreen(
                             Text(
                                 text = uiState.authSuccessMessage ?: "",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color(0xFF064E3B),
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier.weight(1f)
                             )
@@ -482,8 +389,8 @@ fun AuthScreen(
                                     logInEmail = it
                                     viewModel.clearAuthError()
                                 },
-                                label = { Text("College Email Address") },
-                                placeholder = { Text("e.g. amberpatel077@sgsits.ac.in") },
+                                label = { Text("College / Student Email Address") },
+                                placeholder = { Text("e.g. student@university.edu or name@college.ac.in") },
                                 leadingIcon = {
                                     Icon(Icons.Default.Email, contentDescription = null, tint = BrandCyan)
                                 },
@@ -590,7 +497,7 @@ fun AuthScreen(
                                 shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = BrandCyan,
-                                    contentColor = Color(0xFF00363D)
+                                    contentColor = LightSurface
                                 )
                             ) {
                                 Row(
@@ -653,123 +560,98 @@ fun AuthScreen(
                                     )
                                 }
                             }
-
-                            // Hint regarding demo password
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = BrandIndigo.copy(alpha = 0.2f),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(10.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Icon(Icons.Default.Info, contentDescription = null, tint = BrandCyan, modifier = Modifier.size(16.dp))
-                                    Text(
-                                        text = "Campus accounts password: password123 (or pick a Demo Student below)",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
                         }
                     }
                 }
 
-                // 1-Tap Quick Demo Log-In Section
+                // Single Demo Account Quick Access (Restricted to 1 Official Demo Account)
                 item {
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "⚡ Instant Demo Log-In",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    text = "1-Tap Access",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = BrandCyan,
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                    val demoStudent = allStudents.find { it.id == SkillSyncViewModel.DEMO_STUDENT_ID }
+                        ?: StudentProfile(
+                            id = SkillSyncViewModel.DEMO_STUDENT_ID,
+                            name = "Amber Patel",
+                            college = "SGSITS Indore",
+                            branch = "Computer Science & Engineering",
+                            year = "2nd Year",
+                            email = "amberpatel077@sgsits.ac.in"
+                        )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 48.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .clickable {
+                                logInEmail = demoStudent.email
+                                logInPassword = "password123"
+                                viewModel.quickLogin(SkillSyncViewModel.DEMO_STUDENT_ID)
                             }
-                            Text(
-                                text = "Select a pre-configured student profile to test SkillSync instantly:",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(vertical = 6.dp)
-                            )
-
-                            val demoStudents = allStudents.take(4)
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                demoStudents.forEach { student ->
-                                    Surface(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .clickable {
-                                                logInEmail = student.email
-                                                logInPassword = "password123"
-                                                viewModel.quickLogin(student.id)
-                                            }
-                                            .testTag("btn_quick_login_${student.id}"),
-                                        color = SurfaceCard,
-                                        shape = RoundedCornerShape(10.dp),
-                                        border = androidx.compose.foundation.BorderStroke(1.dp, CardStroke)
+                            .testTag("btn_quick_login_student_amber")
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                StudentAvatar(student = demoStudent, size = 36.dp)
+                                Column {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                                     ) {
-                                        Row(
-                                            modifier = Modifier.padding(12.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                            ) {
-                                                StudentAvatar(student = student, size = 36.dp)
-                                                Column {
-                                                    Text(
-                                                        text = student.name,
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = MaterialTheme.colorScheme.onSurface
-                                                    )
-                                                    Text(
-                                                        text = "${student.branch} • ${student.year}",
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                    )
-                                                }
-                                            }
-
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Text(
-                                                    text = "Log In",
-                                                    style = MaterialTheme.typography.labelMedium,
-                                                    color = BrandCyan,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                                Icon(
-                                                    Icons.AutoMirrored.Filled.ArrowForward,
-                                                    contentDescription = null,
-                                                    tint = BrandCyan,
-                                                    modifier = Modifier.size(14.dp)
-                                                )
-                                            }
-                                        }
+                                        Icon(
+                                            imageVector = Icons.Default.FlashOn,
+                                            contentDescription = null,
+                                            tint = BrandCyan,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Text(
+                                            text = androidx.compose.ui.res.stringResource(R.string.demo_single_account_title),
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
                                     }
+                                    Text(
+                                        text = "${demoStudent.name} • ${androidx.compose.ui.res.stringResource(R.string.demo_single_account_subtitle)}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+
+                            Surface(
+                                color = BrandCyan.copy(alpha = 0.15f),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text(
+                                        text = androidx.compose.ui.res.stringResource(R.string.demo_single_account_cta),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = BrandCyan
+                                    )
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.ArrowForward,
+                                        contentDescription = androidx.compose.ui.res.stringResource(R.string.demo_single_account_cta),
+                                        tint = BrandCyan,
+                                        modifier = Modifier.size(14.dp)
+                                    )
                                 }
                             }
                         }
@@ -827,13 +709,13 @@ fun AuthScreen(
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
-                                    text = "Join SGSITS Indore innovation network & find dream team members",
+                                    text = "Join the inter-college innovation network & find dream teammates",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
 
-                            // SGSITS Campus Exclusive Banner
+                            // Open to All Colleges Banner
                             Surface(
                                 color = BrandCyan.copy(alpha = 0.12f),
                                 shape = RoundedCornerShape(10.dp),
@@ -847,13 +729,13 @@ fun AuthScreen(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Icon(
-                                        Icons.Default.Verified,
+                                        Icons.Default.Public,
                                         contentDescription = null,
                                         tint = BrandCyan,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Text(
-                                        text = "Campus Exclusive: Registrations are currently restricted to SGSITS Indore students.",
+                                        text = androidx.compose.ui.res.stringResource(R.string.open_all_colleges_banner),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = BrandCyan,
                                         fontWeight = FontWeight.SemiBold
@@ -970,8 +852,8 @@ fun AuthScreen(
                                         signUpEmail = it
                                         viewModel.clearAuthError()
                                     },
-                                    label = { Text("SGSITS Student Email Address *") },
-                                    placeholder = { Text("e.g. vikram@sgsits.ac.in or student email") },
+                                    label = { Text("College / Student Email Address *") },
+                                    placeholder = { Text("e.g. student@university.edu or name@college.ac.in") },
                                     leadingIcon = {
                                         Icon(Icons.Default.School, contentDescription = null, tint = BrandCyan)
                                     },
@@ -983,8 +865,16 @@ fun AuthScreen(
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                                 )
 
-                                val isVerifiedEmail = signUpEmail.endsWith(".edu") || signUpEmail.endsWith(".ac.in") ||
-                                        signUpEmail.contains("sgsits") || signUpEmail.contains("college") || signUpEmail.contains("univ")
+                                val lowerSignUpEmail = signUpEmail.lowercase()
+                                val isVerifiedEmail = lowerSignUpEmail.endsWith(".edu") ||
+                                        lowerSignUpEmail.endsWith(".ac.in") ||
+                                        lowerSignUpEmail.endsWith(".edu.in") ||
+                                        lowerSignUpEmail.contains("college") ||
+                                        lowerSignUpEmail.contains("univ") ||
+                                        lowerSignUpEmail.contains("iit") ||
+                                        lowerSignUpEmail.contains("nit") ||
+                                        lowerSignUpEmail.contains("iiit") ||
+                                        lowerSignUpEmail.contains("bits")
                                 if (isVerifiedEmail) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
@@ -993,7 +883,7 @@ fun AuthScreen(
                                     ) {
                                         Icon(Icons.Default.Verified, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(14.dp))
                                         Text(
-                                            text = if (signUpEmail.contains("sgsits")) "Verified SGSITS student domain detected!" else "Verified student domain detected!",
+                                            text = androidx.compose.ui.res.stringResource(R.string.verified_academic_domain),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = SuccessGreen,
                                             fontWeight = FontWeight.SemiBold
@@ -1030,49 +920,29 @@ fun AuthScreen(
                                 singleLine = true
                             )
 
-                            // College / University (Locked to SGSITS Indore for now)
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            // College / University (Open to Every College & University)
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 OutlinedTextField(
                                     value = signUpCollege,
-                                    onValueChange = { /* Fixed to SGSITS Indore for current phase */ },
-                                    readOnly = true,
-                                    enabled = true,
-                                    label = { Text("College / University *") },
+                                    onValueChange = {
+                                        signUpCollege = it
+                                        viewModel.clearAuthError()
+                                    },
+                                    label = { Text(androidx.compose.ui.res.stringResource(R.string.college_field_label)) },
+                                    placeholder = { Text(androidx.compose.ui.res.stringResource(R.string.college_field_placeholder)) },
                                     leadingIcon = {
                                         Icon(Icons.Default.Apartment, contentDescription = null, tint = BrandCyan)
                                     },
                                     trailingIcon = {
-                                        Surface(
-                                            color = BrandCyan.copy(alpha = 0.15f),
-                                            shape = RoundedCornerShape(8.dp),
-                                            modifier = Modifier.padding(end = 8.dp)
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                            ) {
+                                        if (signUpCollege.isNotEmpty()) {
+                                            IconButton(onClick = { signUpCollege = "" }) {
                                                 Icon(
-                                                    Icons.Default.Lock,
-                                                    contentDescription = null,
-                                                    tint = BrandCyan,
-                                                    modifier = Modifier.size(12.dp)
-                                                )
-                                                Text(
-                                                    "SGSITS Only",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = BrandCyan,
-                                                    fontWeight = FontWeight.Bold
+                                                    Icons.Default.Clear,
+                                                    contentDescription = "Clear college",
+                                                    modifier = Modifier.size(18.dp)
                                                 )
                                             }
                                         }
-                                    },
-                                    supportingText = {
-                                        Text(
-                                            "Shri Govindram Seksaria Institute of Technology and Science, Indore (Campus Launch Exclusive)",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -1080,6 +950,19 @@ fun AuthScreen(
                                     shape = RoundedCornerShape(12.dp),
                                     singleLine = true
                                 )
+
+                                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    items(popularColleges) { campus ->
+                                        FilterChip(
+                                            selected = signUpCollege.equals(campus, ignoreCase = true),
+                                            onClick = {
+                                                signUpCollege = campus
+                                                viewModel.clearAuthError()
+                                            },
+                                            label = { Text(campus, fontSize = 11.sp) }
+                                        )
+                                    }
+                                }
                             }
 
                             // Branch / Department
@@ -1178,6 +1061,24 @@ fun AuthScreen(
                                 }
                             }
 
+                            // Inline Sent / Not Sent feedback right above Submit so it is always visible
+                            if (uiState.authError != null) {
+                                com.example.ui.components.InlineRegistrationNotSentCard(
+                                    title = androidx.compose.ui.res.stringResource(com.example.R.string.registration_not_sent_title),
+                                    reason = uiState.authError ?: "",
+                                    onDismiss = { viewModel.clearAuthError() },
+                                    modifier = Modifier.testTag("signup_status_not_sent")
+                                )
+                            } else if (uiState.authSuccessMessage != null) {
+                                com.example.ui.components.RegistrationSentPill(
+                                    label = androidx.compose.ui.res.stringResource(com.example.R.string.registration_sent_title),
+                                    subtitle = uiState.authSuccessMessage,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("signup_status_sent")
+                                )
+                            }
+
                             // Submit Button
                             Button(
                                 onClick = {
@@ -1206,7 +1107,7 @@ fun AuthScreen(
                                 shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = BrandCyan,
-                                    contentColor = Color(0xFF00363D)
+                                    contentColor = LightSurface
                                 )
                             ) {
                                 Row(
@@ -1215,7 +1116,7 @@ fun AuthScreen(
                                 ) {
                                     Icon(Icons.Default.PersonAdd, contentDescription = null, modifier = Modifier.size(20.dp))
                                     Text(
-                                        text = "Create Account & Log In",
+                                        text = if (uiState.authError != null) "Retry Registration" else "Create Account & Log In",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -1282,68 +1183,60 @@ fun AuthScreen(
                 }
             }
 
-            // Official Team SkillSync Credits Footer from User Image
+            // Collapsible Team Credits Footer (hidden by default)
             item {
-                Spacer(modifier = Modifier.height(28.dp))
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                    modifier = Modifier.fillMaxWidth()
+                Spacer(modifier = Modifier.height(20.dp))
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    TextButton(
+                        onClick = { showTeamCredits = !showTeamCredits },
+                        modifier = Modifier.testTag("btn_toggle_team_credits")
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        Icon(
+                            imageVector = Icons.Default.School,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (showTeamCredits) "Hide Credits" else "Team SkillSync",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    AnimatedVisibility(visible = showTeamCredits) {
+                        Surface(
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp)
                         ) {
-                            Icon(
-                                Icons.Default.School,
-                                contentDescription = null,
-                                tint = BrandIndigo,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Text(
-                                text = "Team SkillSync",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .size(4.dp)
-                                    .clip(CircleShape)
-                                    .background(BrandIndigo)
-                            )
-                            Text(
-                                text = "Design Thinking Project",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Design Thinking Project",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Abhinav Purohit  •  Abhinav Mehta  •  Akash Patel  •  Amber Patel  •  Ishmit Shukla",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                    lineHeight = 16.sp
+                                )
+                            }
                         }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = "Abhinav Purohit  •  Abhinav Mehta  •  Akash Patel  •  Amber Patel  •  Ishmit Shukla",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                            lineHeight = 16.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            text = "Student Opportunity & Skill-Based Team Matching Platform",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
                     }
                 }
             }
@@ -1375,7 +1268,7 @@ fun AuthScreen(
                             value = forgotPasswordEmail,
                             onValueChange = { forgotPasswordEmail = it },
                             label = { Text("College Email") },
-                            placeholder = { Text("e.g. amberpatel077@sgsits.ac.in") },
+                            placeholder = { Text("e.g. student@college.ac.in") },
                             leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = BrandCyan) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
@@ -1386,7 +1279,7 @@ fun AuthScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = "💡 Note: For demo accounts, the default password is password123",
+                                text = "💡 Note: For the demo account, the default password is password123",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = BrandCyan,
                                 modifier = Modifier.padding(8.dp)
@@ -1415,14 +1308,14 @@ fun AuthScreen(
                                 forgotPasswordSent = true
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandCyan, contentColor = Color(0xFF00363D))
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandCyan, contentColor = LightSurface)
                     ) {
                         Text("Send Reset Link", fontWeight = FontWeight.Bold)
                     }
                 } else {
                     Button(
                         onClick = { showForgotPasswordDialog = false },
-                        colors = ButtonDefaults.buttonColors(containerColor = BrandCyan, contentColor = Color(0xFF00363D))
+                        colors = ButtonDefaults.buttonColors(containerColor = BrandCyan, contentColor = LightSurface)
                     ) {
                         Text("Done", fontWeight = FontWeight.Bold)
                     }

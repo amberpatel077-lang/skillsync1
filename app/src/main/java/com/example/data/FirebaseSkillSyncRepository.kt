@@ -59,7 +59,7 @@ class FirebaseSkillSyncRepository(
                         val branch = doc.getString("branch") ?: "CSE"
                         val year = doc.getString("year") ?: "3rd Year"
                         val bio = doc.getString("bio") ?: ""
-                        val college = doc.getString("college") ?: "SGSITS Indore"
+                        val college = doc.getString("college") ?: "University Campus"
                         val skillsRaw = doc.get("skills") as? List<Map<String, Any>> ?: emptyList()
                         val skills = skillsRaw.map {
                             SkillEntry(
@@ -334,9 +334,11 @@ class FirebaseSkillSyncRepository(
         val payload = mapOf(
             "id" to app.id,
             "applicantId" to (auth.currentUser?.uid ?: app.studentId),
+            "clubOpportunityId" to app.clubOpportunityId,
             "clubName" to app.clubName,
             "roleApplied" to app.roleApplied,
             "sop" to app.sop,
+            "portfolioUrl" to app.portfolioUrl,
             "status" to app.status.name,
             "appliedAt" to FieldValue.serverTimestamp()
         )

@@ -42,7 +42,7 @@ data class UiState(
     val isAuthenticated: Boolean = false,
     val authError: String? = null,
     val authSuccessMessage: String? = null,
-    val currentStudentId: String = "student_amber",
+    val currentStudentId: String = "",
     val activeTab: AppTab = AppTab.HOME,
     val exploreSubTab: ExploreSubTab = ExploreSubTab.OPPORTUNITIES,
     val selectedOpportunityId: String? = null,
@@ -83,8 +83,6 @@ enum class ExploreSubTab(val title: String) {
 class SkillSyncViewModel(application: Application) : AndroidViewModel(application) {
 
     companion object {
-        const val DEMO_STUDENT_ID = "student_amber"
-
         fun inferCollegeFromEmail(email: String): String {
             val domain = email.substringAfter("@", "").lowercase()
             return when {
@@ -147,7 +145,8 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
 
     // Active student flow
     val currentStudent: StateFlow<StudentProfile?> = combine(students, _uiState) { list, state ->
-        list.find { it.id == state.currentStudentId } ?: list.firstOrNull()
+        if (!state.isAuthenticated || state.currentStudentId.isBlank()) null
+        else list.find { it.id == state.currentStudentId }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     // Invitations for current student (both sent & received)
@@ -772,8 +771,8 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 onComplete?.invoke(false)
                 return@launch
             }
-            if (student.password != trimmedPassword && trimmedPassword != "password123") {
-                _uiState.update { it.copy(authError = "Incorrect password. (Hint: Demo account uses password123)") }
+            if (student.password != trimmedPassword) {
+                _uiState.update { it.copy(authError = "Incorrect password. Please try again or reset your password.") }
                 onComplete?.invoke(false)
                 return@launch
             }
@@ -859,22 +858,6 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 Log.e("SkillSyncVM", "Google Sign In error", e)
                 _uiState.update { it.copy(authError = "Google Sign In: ${e.localizedMessage ?: "Sign in failed"}") }
                 onComplete?.invoke(false)
-            }
-        }
-    }
-
-    fun quickLogin(studentId: String = DEMO_STUDENT_ID) {
-        viewModelScope.launch {
-            val targetDemoId = DEMO_STUDENT_ID
-            val student = students.value.find { it.id == targetDemoId }
-            _uiState.update {
-                it.copy(
-                    isAuthenticated = true,
-                    currentStudentId = targetDemoId,
-                    authError = null,
-                    authSuccessMessage = null,
-                    userMessage = "Logged in with Demo Account (${student?.name ?: "Amber Patel"})! 🚀"
-                )
             }
         }
     }
@@ -1019,9 +1002,11 @@ class SkillSyncViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun logout() {
+        runCatching { FirebaseAuth.getInstance().signOut() }
         _uiState.update {
             it.copy(
                 isAuthenticated = false,
+                currentStudentId = "",
                 activeTab = AppTab.HOME,
                 userMessage = "Logged out successfully",
                 lastRegistrationStatus = null

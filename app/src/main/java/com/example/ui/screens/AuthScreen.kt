@@ -18,7 +18,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -46,7 +45,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.R
 import com.example.model.*
-import com.example.ui.components.StudentAvatar
 import com.example.ui.theme.*
 import com.example.viewmodel.SkillSyncViewModel
 
@@ -63,7 +61,6 @@ fun AuthScreen(
     initialTab: AuthTab = AuthTab.LOG_IN
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val allStudents by viewModel.students.collectAsState()
     val focusManager = LocalFocusManager.current
 
     var currentTab by remember { mutableStateOf(initialTab) }
@@ -557,100 +554,6 @@ fun AuthScreen(
                                         text = "Sign in with Google",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Single Demo Account Quick Access (Restricted to 1 Official Demo Account)
-                item {
-                    val demoStudent = allStudents.find { it.id == SkillSyncViewModel.DEMO_STUDENT_ID }
-                        ?: StudentProfile(
-                            id = SkillSyncViewModel.DEMO_STUDENT_ID,
-                            name = "Amber Patel",
-                            college = "SGSITS Indore",
-                            branch = "Computer Science & Engineering",
-                            year = "2nd Year",
-                            email = "amberpatel077@sgsits.ac.in"
-                        )
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Surface(
-                        shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .defaultMinSize(minHeight = 48.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .clickable {
-                                logInEmail = demoStudent.email
-                                logInPassword = "password123"
-                                viewModel.quickLogin(SkillSyncViewModel.DEMO_STUDENT_ID)
-                            }
-                            .testTag("btn_quick_login_student_amber")
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                StudentAvatar(student = demoStudent, size = 36.dp)
-                                Column {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.FlashOn,
-                                            contentDescription = null,
-                                            tint = BrandCyan,
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                        Text(
-                                            text = androidx.compose.ui.res.stringResource(R.string.demo_single_account_title),
-                                            style = MaterialTheme.typography.labelLarge,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                    }
-                                    Text(
-                                        text = "${demoStudent.name} • ${androidx.compose.ui.res.stringResource(R.string.demo_single_account_subtitle)}",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1
-                                    )
-                                }
-                            }
-
-                            Surface(
-                                color = BrandCyan.copy(alpha = 0.15f),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Text(
-                                        text = androidx.compose.ui.res.stringResource(R.string.demo_single_account_cta),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = BrandCyan
-                                    )
-                                    Icon(
-                                        Icons.AutoMirrored.Filled.ArrowForward,
-                                        contentDescription = androidx.compose.ui.res.stringResource(R.string.demo_single_account_cta),
-                                        tint = BrandCyan,
-                                        modifier = Modifier.size(14.dp)
                                     )
                                 }
                             }
@@ -1273,18 +1176,6 @@ fun AuthScreen(
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
                         )
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = BrandIndigo.copy(alpha = 0.2f),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = "💡 Note: For the demo account, the default password is password123",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = BrandCyan,
-                                modifier = Modifier.padding(8.dp)
-                            )
-                        }
                     } else {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
